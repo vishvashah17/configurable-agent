@@ -1,0 +1,38 @@
+[
+    {
+        "timestamp": "2025-11-10T09:53:28.629130",
+        "question": "Toulouse has twice as many sheep as Charleston. Charleston has 4 times as many sheep as Seattle. How many sheep do Toulouse, Charleston, and Seattle have together if Seattle has 20 sheep?",
+        "baseline_answer": "Answer: 260\n\n**Step-by-Step Explanation:**\n1. **Seattle:** 20 sheep (given).\n2. **Charleston:** 4 × Seattle = 4 × 20 = **80 sheep**.\n3. **Toulouse:** 2 × Charleston = 2 × 80 = **160 sheep**.\n4. **Total:** 20 (Seattle) + 80 (Charleston) + 160 (Toulouse) = **260 sheep**.",
+        "configurable": {
+            "plan": "Steps:\n1. Toulouse has twice as many sheep as Charleston\n2. Charleston has 4 times as many sheep as Seattle\n3. How many sheep do Toulouse, Charleston, and Seattle have together if Seattle has 20 sheep?",
+            "answer": "To determine the total number of sheep that Toulouse, Charleston, and Seattle have together, we start by analyzing the given relationships and applying them systematically.\n\n---\n\n### **Step 1: Define Variables and Relationships**\n\nLet:\n- $ S $ = number of sheep in Seattle\n- $ C $ = number of sheep in Charleston\n- $ T $ = number of sheep in Toulouse\n\nFrom the problem:\n1. $ T = 2C $  (Toulouse has twice as many sheep as Charleston)\n2. $ C = 4S $  (Charleston has 4 times as many sheep as Seattle)\n3. $ S = 20 $  (Seattle has 20 sheep)\n\n---\n\n### **Step 2: Calculate the Number of Sheep in Each City**\n\n**Charleston:**\n$$\nC = 4S = 4 \\times 20 = 80\n$$\n\n**Toulouse:**\n$$\nT = 2C = 2 \\times 80 = 160\n$$\n\n**Seattle:**\n$$\nS = 20 \\quad \\text{(given)}\n$$\n\n---\n\n### **Step 3: Compute the Total Number of Sheep**\n\nAdd the number of sheep in all three cities:\n$$\n\\text{Total} = S + C + T = 20 + 80 + 160 = 260\n$$\n\n---\n\n### **Final Answer**\n\n$$\n\\boxed{260}\n$$",
+            "persona": "mathematician"
+        },
+        "similar_examples": [
+            {
+                "sample": {
+                    "category": "Arithmetic",
+                    "question": "If John has 3 apples and eats one, how many are left?"
+                },
+                "similarity": 0.78
+            },
+            {
+                "sample": {
+                    "category": "Logic",
+                    "question": "If all cats are animals, are some animals cats?"
+                },
+                "similarity": 0.64
+            },
+            {
+                "sample": {
+                    "category": "Language",
+                    "question": "Explain the difference between affect and effect."
+                },
+                "similarity": 0.59
+            }
+        ],
+        "metrics": {
+            "execution_time": 307.2981014251709
+        }
+    }
+]

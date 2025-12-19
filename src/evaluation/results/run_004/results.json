@@ -1,0 +1,43 @@
+[
+    {
+        "timestamp": "2025-11-08T13:59:57.031457",
+        "question": "What is 4+4?",
+        "baseline_answer": "Answer: 8",
+        "configurable": {
+            "plan": "Steps:\n1. What is 4+4?",
+            "answer": "8",
+            "persona": "mathematician",
+            "reflection": {
+                "score": null,
+                "comment": "No ground truth"
+            }
+        },
+        "similar_examples": [
+            {
+                "sample": {
+                    "category": "Arithmetic",
+                    "question": "If John has 3 apples and eats one, how many are left?"
+                },
+                "similarity": 0.78
+            },
+            {
+                "sample": {
+                    "category": "Logic",
+                    "question": "If all cats are animals, are some animals cats?"
+                },
+                "similarity": 0.64
+            },
+            {
+                "sample": {
+                    "category": "Language",
+                    "question": "Explain the difference between affect and effect."
+                },
+                "similarity": 0.59
+            }
+        ],
+        "reflection": null,
+        "metrics": {
+            "execution_time": 34.670990228652954
+        }
+    }
+]

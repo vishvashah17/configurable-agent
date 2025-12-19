@@ -1,0 +1,24 @@
+[
+    {
+        "timestamp": "2025-11-08T13:50:59.334399",
+        "question": "What is 4+4?",
+        "baseline_answer": "Answer: 8",
+        "configurable": {
+            "plan": "Steps:\n1. What is 4+4?",
+            "answer": "8",
+            "persona": "mathematician",
+            "reflection": {
+                "score": null,
+                "comment": "No ground truth"
+            }
+        },
+        "similar_examples": [],
+        "reflection": {
+            "score": null,
+            "comment": "No ground truth"
+        },
+        "metrics": {
+            "execution_time": 45.06141114234924
+        }
+    }
+]

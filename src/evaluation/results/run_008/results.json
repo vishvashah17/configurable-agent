@@ -1,0 +1,38 @@
+[
+    {
+        "timestamp": "2025-11-08T14:11:16.205961",
+        "question": "Eliza's rate per hour for the first 40 hours she works each week is $10. She also receives an overtime pay of 1.2 times her regular hourly rate. If Eliza worked for 45 hours this week, how much are her earnings for this week?",
+        "baseline_answer": "Eliza's earnings are calculated as follows:  \n- **Regular pay**: 40 hours × $10 = **$400**  \n- **Overtime pay**: 5 hours × (1.2 × $10) = 5 × $12 = **$60**  \n- **Total earnings**: $400 + $60 = **$460**  \n\nAnswer: $460",
+        "configurable": {
+            "plan": "Steps:\n1. Eliza's rate per hour for the first 40 hours she works each week is $10\n2. She also receives an overtime pay of 1\n3. 2 times her regular hourly rate\n4. If Eliza worked for 45 hours this week, how much are her earnings for this week?",
+            "answer": "To determine Eliza's earnings for the week, we break down her work hours into regular and overtime components, then calculate each part separately before summing them up.\n\n---\n\n### **Step 1: Calculate Regular Earnings**\n\nEliza earns **$10 per hour** for the first **40 hours** of work.  \n$$\n\\text{Regular Earnings} = 40 \\, \\text{hours} \\times \\$10/\\text{hour} = \\$400\n$$\n\n---\n\n### **Step 2: Calculate Overtime Earnings**\n\nFor hours worked beyond 40, Eliza receives **1.2 times her regular hourly rate**.  \n$$\n\\text{Overtime Rate} = 1.2 \\times \\$10/\\text{hour} = \\$12/\\text{hour}\n$$\n\nShe worked **45 hours** in total, so the overtime hours are:\n$$\n\\text{Overtime Hours} = 45 \\, \\text{hours} - 40 \\, \\text{hours} = 5 \\, \\text{hours}\n$$\n\n$$\n\\text{Overtime Earnings} = 5 \\, \\text{hours} \\times \\$12/\\text{hour} = \\$60\n$$\n\n---\n\n### **Step 3: Total Earnings**\n\n$$\n\\text{Total Earnings} = \\text{Regular Earnings} + \\text{Overtime Earnings} = \\$400 + \\$60 = \\$460\n$$\n\n---\n\n### **Final Answer:**\n$$\n\\boxed{460}\n$$",
+            "persona": "mathematician"
+        },
+        "similar_examples": [
+            {
+                "sample": {
+                    "category": "Arithmetic",
+                    "question": "If John has 3 apples and eats one, how many are left?"
+                },
+                "similarity": 0.78
+            },
+            {
+                "sample": {
+                    "category": "Logic",
+                    "question": "If all cats are animals, are some animals cats?"
+                },
+                "similarity": 0.64
+            },
+            {
+                "sample": {
+                    "category": "Language",
+                    "question": "Explain the difference between affect and effect."
+                },
+                "similarity": 0.59
+            }
+        ],
+        "metrics": {
+            "execution_time": 292.16938877105713
+        }
+    }
+]

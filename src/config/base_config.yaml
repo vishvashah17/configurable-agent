@@ -1,0 +1,12 @@
+agent:
+  model: "qwen3:8b"        # switch to llama3 or qwen3:4b anytime
+  planning: true
+  reasoning: true
+  memory: true
+  tools: true
+  reflection: true
+  personas: true           # Enable adaptive persona system (mathematician, linguist, etc.)
+
+evaluation:
+  sample_size_per_dataset: 50
+

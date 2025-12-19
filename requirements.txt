@@ -1,0 +1,12 @@
+ollama
+pandas
+pyyaml
+tqdm
+faiss-cpu
+sentence-transformers
+numpy
+scikit-learn
+nltk
+rouge-score
+neo4j
+flask
