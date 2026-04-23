@@ -1,0 +1,41 @@
+{
+  "user input": "Create an AI agent that summarizes PDF documents into bullet points",
+  "agent_name": "PDF Summarizer",
+  "primary_purpose": "Summarizing PDF documents into bullet points",
+  "capabilities": [
+    "Text extraction",
+    "Natural Language Processing",
+    "Information Extraction"
+  ],
+  "target_users": "Users who need quick summaries of lengthy PDF documents",
+  "domain": "Document Processing",
+  "content_types": [
+    "PDF"
+  ],
+  "decision_authority": "assist only",
+  "language": "Python",
+  "framework": "None",
+  "api_integrations": [
+    "PDF"
+  ],
+  "database": "json_file",
+  "cloud_platform": "local",
+  "performance": "normal",
+  "security": "basic",
+  "storage": "json_file",
+  "memory": "in_memory",
+  "third_party_tools": [
+    "AI Agent",
+    "PDF Summarizer"
+  ],
+  "tone": "neutral",
+  "personality": [
+    "helpful"
+  ],
+  "emotional_intelligence": "medium",
+  "response_length": null,
+  "external_apis": [],
+  "internal_systems": [],
+  "database_connections": [],
+  "messaging_systems": null
+}

@@ -1,0 +1,28 @@
+timestamp,user_input
+2026-03-18T03:39:54.656388,"Build a web application for a food delivery service. The app should allow users to browse restaurants, add items to cart, and place orders. It should include user authentication, payment integration (Stripe), and real-time order tracking. Tech stack preferred: React for frontend, Node.js for backend, MongoDB for database."
+2026-03-18T04:36:15.892608,Build me a CSV named entity extractor
+2026-03-18T04:41:34.691943,Build me a CSV named entity extractor
+2026-03-18T04:45:08.402959,Build me a CSV named entity extractor
+2026-03-18T09:50:53.925963,what is LLM?
+2026-03-18T10:23:32.043012,what is RAG?
+2026-03-18T10:46:22.189758,what is LLM?
+2026-03-18T10:59:56.774036,what is RAG?
+2026-03-18T11:03:55.651338,"Create an AI agent that summarizes long documents into short bullet points. The agent should accept PDF input, use OpenAI GPT model, and return concise summaries. It should also highlight key insights and allow user-defined summary length."
+2026-03-18T13:06:41.884250,what is RAG?
+2026-03-18T13:09:10.958149,"Create an AI agent that summarizes long documents into short bullet points. The agent should accept PDF input, use OpenAI GPT model, and return concise summaries. It should also highlight key insights and allow user-defined summary length."
+2026-03-18T13:19:56.487581,"Develop an agent that reads CSV files and extracts customer insights such as total purchases, average order value, and most frequent buyers. The output should be in JSON format and support large datasets."
+2026-03-18T13:23:30.951881,"make a agent which takes text as input and gives me all the extracted things from the text.csvto output.json as JSON file, text contains an agent buildinng prompt, use langgraph"
+2026-03-18T13:25:55.463293,"make a agent which takes text as input and gives me all the extracted things from the text.csvto output.json as JSON file, text contains an agent buildinng prompt, use langgraph"
+2026-03-18T13:56:48.799851,"make a agent which takes text as input and gives me all the extracted things from the text.csv to output.json as JSON file, text contains an agent buildinng prompt, use langgraph framework."
+2026-03-18T14:14:37.177741,what is RAG?
+2026-03-18T14:17:44.705661,"build an agent which takes input.csv as an input text and extract agent name, purpose, capabilities, target users, and save them into a output.json file as an output."
+2026-03-18T15:14:12.256972,Build small NlP Model with sample dataset with 0.6million params
+2026-03-29T02:52:20.032795,Build a web scraping agent that monitors price changes daily
+2026-03-29T02:58:54.396355,Build a web scraping agent that monitors price changes daily
+2026-03-29T03:01:43.225456,Build a web scraping agent that monitors price changes daily
+2026-03-29T03:04:06.272938,Build a web scraping agent that monitors price changes daily
+2026-03-29T03:09:33.933596,"Build a web application for a food delivery service. The app should allow users to browse restaurants, add items to cart, and place orders. It should include user authentication, payment integration (Stripe), and real-time order tracking. Tech stack preferred: React for frontend, Node.js for backend, MongoDB for database."
+2026-03-29T03:14:27.562618,What is an LLM agent?
+2026-03-29T03:15:42.173937,what is RAG?
+2026-03-29T03:17:06.279404,Create an AI agent that summarizes PDF documents into bullet points
+2026-03-29T03:21:11.290996,Create an AI agent that summarizes PDF documents into bullet points
