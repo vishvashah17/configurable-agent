@@ -1,25 +1,24 @@
 import asyncio
 import argparse
 import logging
-from agent import PdfSummarizer
+from agent import Customerinsightsagent
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='PDF Summarizer')
-    parser.add_argument('--input', help='Input PDF file')
-    parser.add_argument('--output', help='Output summary file')
+    parser = argparse.ArgumentParser(description='Customer Insights Agent')
     return parser.parse_args()
 
 async def main():
     try:
-        args = parse_args()
-        agent = PdfSummarizer()
-        await agent.summarize(args.input, args.output)
+        agent = Customerinsightsagent()
+        await agent.run()
     except KeyboardInterrupt:
-        logging.info('Shutdown requested')
+        logger.info('Shutdown requested')
     except Exception as e:
-        logging.error(f'Error: {e}')
+        logger.error(f'Error: {e}')
 
 if __name__ == '__main__':
+    args = parse_args()
     asyncio.run(main())

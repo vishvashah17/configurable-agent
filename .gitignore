@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+agentforge.db
 
 # Python
 __pycache__/
@@ -32,3 +33,5 @@ build/
 Thumbs.db
 .idea/
 .vscode/
+
+.vercel

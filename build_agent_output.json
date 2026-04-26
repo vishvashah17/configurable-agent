@@ -1,9 +1,0 @@
-{
-  "route": "json_extractor",
-  "classification": "agent_building",
-  "user_text": "Create an AI agent that summarizes PDF documents into bullet points",
-  "conversational_response": null,
-  "confidence": "high",
-  "reason": "contains keywords 'create' and 'agent' indicating a build request",
-  "original_input": "Create an AI agent that summarizes PDF documents into bullet points"
-}

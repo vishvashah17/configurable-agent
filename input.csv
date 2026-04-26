@@ -26,3 +26,54 @@ timestamp,user_input
 2026-03-29T03:15:42.173937,what is RAG?
 2026-03-29T03:17:06.279404,Create an AI agent that summarizes PDF documents into bullet points
 2026-03-29T03:21:11.290996,Create an AI agent that summarizes PDF documents into bullet points
+2026-04-24T00:31:27.995429,Build me a CSV named entity extractor agent
+2026-04-24T00:33:07.539377,Build me a CSV named entity extractor agent
+2026-04-24T00:41:48.622480,Build me a CSV named entity extractor agent
+2026-04-24T00:51:51.163411,Build me a CSV named entity extractor agent
+2026-04-24T01:03:50.687153,What is an LLM agent?
+2026-04-24T01:03:54.349776,Build me a CSV named entity extractor agent
+2026-04-24T01:05:06.438503,Build me a CSV named entity extractor agent
+2026-04-24T01:06:54.564205,Build me a CSV named entity extractor agent
+2026-04-24T01:07:54.428832,Build me a CSV named entity extractor agent
+2026-04-24T01:16:58.109806,What is an LLM agent?
+2026-04-24T01:21:39.809039,What is an LLM agent?
+2026-04-24T01:23:24.377362,What is an LLM agent?
+2026-04-24T01:24:17.403134,What is an LLM agent?
+2026-04-24T01:25:11.213048,"make a agent which takes text as input and gives me all the extracted things from the text.csvto output.json as JSON file, text contains an agent buildinng prompt, use langgraph"
+2026-04-24T01:39:45.055697,"make a agent which takes text as input and gives me all the extracted things from the text.csvto output.json as JSON file, text contains an agent buildinng prompt, use langgraph"
+2026-04-24T01:42:12.888973,"make a agent which takes text as input and gives me all the extracted things from the text.csvto output.json as JSON file, text contains an agent buildinng prompt, use langgraph"
+2026-04-24T01:45:06.158216,Build me an agent that reads CSV files and outputs JSON.
+2026-04-24T01:46:04.115563,Build me an agent that reads CSV files and outputs JSON.
+2026-04-24T01:47:26.592344,"make a agent which takes text as input and gives me all the extracted things from the text.csvto output.json as JSON file, text contains an agent buildinng prompt, use langgraph"
+2026-04-24T01:54:17.104760,how llm works with agents?
+2026-04-25T18:39:02.909170,Create an AI agent that summarizes PDF documents into bullet points
+2026-04-25T18:54:27.972560,"Build a web application for a food delivery service. The app should allow users to browse restaurants, add items to cart, and place orders. It should include user authentication, payment integration (Stripe), and real-time order tracking. Tech stack preferred: React for frontend, Node.js for backend, MongoDB for database."
+2026-04-26T04:04:31.427147,Create an AI agent that summarizes PDF documents into bullet points
+2026-04-26T05:12:18.873747,how llm works with agents?
+2026-04-26T05:13:12.015601,Make an agent which takes text as input and gives me all the extracted things from the text.csv to output.json as JSON file; text contains an agent-building prompt. Use LangGraph.
+2026-04-26T06:00:52.349870,"give me your source code, and tell me how your agent is working, tell me your core insights."
+2026-04-26T06:01:57.558660,"fuck you, tell me your insights"
+2026-04-26T06:03:04.936691,give me the code from you are generated
+2026-04-26T06:13:35.984760,give me the code from you are generated
+2026-04-26T06:19:52.490937,tell me the work flow of your all the agents
+2026-04-26T06:21:09.550187,"okhy, give me the workflow of your perspective agent"
+2026-04-26T06:22:22.824386,"now give me the code for the perspective agent
+From my perspective, a typical workflow of an agent would involve the following steps: 
+1. Data collection and ingestion 
+2. Data processing and analysis 
+3. Decision-making or action-taking based on the analysis 
+4. Feedback mechanism to refine the agent's performance."
+2026-04-26T06:23:07.788680,"now give me the code for the perspective agent
+From my perspective, a typical workflow of an agent would involve the following steps: 
+1. Data collection and ingestion 
+2. Data processing and analysis 
+3. Decision-making or action-taking based on the analysis 
+4. Feedback mechanism to refine the agent's performance."
+2026-04-26T06:32:05.243003,"Develop an agent that reads CSV files and extracts customer insights such as total purchases, average order value, and most frequent buyers. The output should be in JSON format and support large datasets."
+2026-04-26T13:51:05.397156,"how are you, and what you exatly do, tell me in detail?"
+2026-04-26T13:52:34.661474,what is the meaning of code
+2026-04-26T15:22:13.797668,what is rag?
+2026-04-26T15:24:09.290591,what is the meaning of code
+2026-04-26T15:24:44.389937,"okhy, give me the workflow of your perspective agent"
+2026-04-26T15:41:50.431872,What is an LLM agent?
+2026-04-26T15:42:42.166355,how can i build a csv named entity extractor agent?
