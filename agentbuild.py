@@ -8,12 +8,17 @@ import re
 import logging
 import sys
 import os
+import ast
 from typing import Dict, Any
 
+from dotenv import load_dotenv
 from groq import Groq                          # pip install groq
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("CodeGeneratorAgent")
+
+# Load local environment (e.g., GROQ_API_KEY in .env) early.
+load_dotenv()
 
 # ─────────────────────────────────────────────
 #  CONFIG
@@ -21,6 +26,7 @@ logger = logging.getLogger("CodeGeneratorAgent")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")       # set in your environment or .env
 MODEL        = "llama-3.3-70b-versatile"  # best Groq model for code generation
 MAX_RETRIES  = 3
+MAX_REPAIR_ROUNDS = 2
 
 # Frameworks — anything not in this list is NOT a web framework
 KNOWN_FRAMEWORKS = {"fastapi", "flask", "django", "tornado", "aiohttp", "starlette"}
@@ -127,11 +133,17 @@ Bullet points of key capabilities
 What needs to be installed (Python version, system dependencies)
 
 ## Installation
-Step-by-step setup instructions:
-```bash
-git clone ...
-cd ...
-pip install -r requirements.txt
+Step-by-step setup instructions
+
+## How to Run
+Exact commands to run this agent locally from this generated_agent folder.
+Include:
+- how to create a virtual environment
+- how to install dependencies
+- which environment variables must be set
+- exact run command (`python main.py` or framework-specific command)
+- what success output looks like
+- how to stop the service/process
 """
 
 # ─────────────────────────────────────────────
@@ -148,7 +160,7 @@ _CAP_HINTS = {
     "json"                      : "Use json module (stdlib): open(path,'w'), json.dump(data, f, indent=2).",
     "web scraping"              : "Use requests and BeautifulSoup4: requests.get(url), BeautifulSoup(resp.content,'html.parser').",
     "summarization"             : "Use spacy or nltk for extractive summarization.",
-    "llm"                       : "Use langchain-ollama: from langchain_ollama import OllamaLLM; llm=OllamaLLM(model='mistral'); llm.invoke(prompt).",
+    "llm"                       : "Use Groq SDK: from groq import Groq; client=Groq(api_key=os.getenv('GROQ_API_KEY')); client.chat.completions.create(model='llama-3.3-70b-versatile', messages=[...]).",
     "pdf"                       : "Use PyPDF2: import PyPDF2; reader=PyPDF2.PdfReader(path); page.extract_text().",
     "email"                     : "Use smtplib and email.mime (stdlib) for sending emails.",
     "file monitoring"           : "Use watchdog: from watchdog.observers import Observer; from watchdog.events import FileSystemEventHandler.",
@@ -184,12 +196,15 @@ def prompt_agent_py(spec: Dict[str, Any]) -> str:
     cap_hints    = _get_capability_hints(caps, tools)
     method_list  = "\n".join(f"  - {c}" for c in caps)
 
+    class_name = _derive_class_name(name)
+
     return f"""\
 Generate a complete, working agent.py file.
 Output RAW Python ONLY. No markdown. No fences. No prose. Start with the first import line.
 
 === AGENT SPECIFICATION ===
 Agent Name    : {name}
+Class Name    : {class_name}
 Purpose       : {purpose}
 Language      : {lang}
 {framework_line}
@@ -206,6 +221,7 @@ Target Users  : {spec.get('target_users', 'general users')}
 {cap_hints}
 
 === CRITICAL REQUIREMENTS ===
+- The class name MUST be exactly: {class_name}
 - Every instance variable used in any method MUST be assigned in __init__.
 - Fully implement every method — no stubs, no 'pass', no placeholder comments.
 - Each import must appear EXACTLY ONCE at the top of the file.
@@ -218,9 +234,7 @@ Generate agent.py now:
 def prompt_main_py(spec: Dict[str, Any]) -> str:
     fw         = spec.get("framework", "none") or "none"
     agent_name = spec.get("agent_name", "Agent")
-    class_name = "".join(
-        w.capitalize() for w in re.sub(r"[^a-zA-Z0-9 ]", " ", agent_name).split()
-    )
+    class_name = _derive_class_name(agent_name)
 
     return f"""\
 Generate main.py entry point for this agent.
@@ -236,6 +250,17 @@ Otherwise               -> run with asyncio.run(main())
 
 Generate the complete main.py now. Raw Python only. Start immediately with import.
 """
+
+
+def _derive_class_name(agent_name: str) -> str:
+    cls = "".join(w.capitalize() for w in re.sub(r"[^a-zA-Z0-9 ]", " ", agent_name).split())
+    if not cls:
+        return "GeneratedAgent"
+    if cls[0].isdigit():
+        cls = f"Agent{cls}"
+    if not cls.lower().endswith("agent"):
+        cls += "Agent"
+    return cls
 
 def prompt_requirements(spec: Dict[str, Any]) -> str:
     caps  = " ".join(c.lower() for c in (spec.get("capabilities") or []))
@@ -254,7 +279,7 @@ def prompt_requirements(spec: Dict[str, Any]) -> str:
     if "aws" in cloud:                                    hints.append("boto3")
     if "gcp" in cloud:                                    hints.append("google-cloud")
     if "azure" in cloud:                                  hints.append("azure-core")
-    if any(k in caps for k in ("llm", "ai", "chat")):     hints.append("langchain-ollama, langchain-core")
+    if any(k in caps for k in ("llm", "ai", "chat")):     hints.append("groq")
     if any(k in caps for k in ("scrape", "web", "html")): hints.append("requests, beautifulsoup4")
     if "pdf" in caps:                                     hints.append("PyPDF2")
     if "csv" in caps or "csv" in " ".join(tools):         hints.append("pandas")
@@ -290,7 +315,7 @@ Capabilities  : {spec.get('capabilities')}
 Database      : {spec.get('database', 'none')}
 
 Include: title, description, prerequisites, installation steps,
-how to run, capabilities list, example usage.
+and a very explicit "How to Run" section with exact commands.
 This file is the ONLY place for explanations, design notes, and usage guidance.
 
 Generate the complete README.md now.
@@ -527,6 +552,92 @@ def validate_output(files: Dict[str, str]) -> None:
 
     logger.info("VALIDATION complete.")
 
+
+def quality_issues(files: Dict[str, str], spec: Dict[str, Any]) -> dict[str, list[str]]:
+    issues: dict[str, list[str]] = {"agent.py": [], "main.py": [], "requirements.txt": []}
+    agent_code = files.get("agent.py", "")
+    main_code = files.get("main.py", "")
+    req_text = files.get("requirements.txt", "")
+    class_name = _derive_class_name(spec.get("agent_name", "Agent"))
+
+    for fname, code in [("agent.py", agent_code), ("main.py", main_code)]:
+        try:
+            ast.parse(code)
+        except SyntaxError as e:
+            issues[fname].append(f"SyntaxError: {e}")
+
+    if f"class {class_name}" not in agent_code:
+        issues["agent.py"].append(f"Missing class `{class_name}`.")
+    if "def __init__(" not in agent_code:
+        issues["agent.py"].append("Missing __init__ method.")
+    if "def run(" not in agent_code:
+        issues["agent.py"].append("Missing run() method.")
+    if "__main__" not in main_code:
+        issues["main.py"].append("Missing __main__ entrypoint.")
+
+    placeholders = ["todo", "fixme", "pass", "notimplementederror", "your_api_key"]
+    low = (agent_code + "\n" + main_code).lower()
+    for p in placeholders:
+        if p in low:
+            issues["agent.py"].append(f"Contains placeholder token `{p}`.")
+            break
+
+    required_pkgs = _infer_required_packages(agent_code, main_code)
+    missing = [pkg for pkg in required_pkgs if pkg not in req_text.lower()]
+    if missing:
+        issues["requirements.txt"].append(f"Missing packages inferred from imports: {missing}")
+
+    return issues
+
+
+def _infer_required_packages(agent_code: str, main_code: str) -> set[str]:
+    mapping = {
+        "dotenv": "python-dotenv",
+        "bs4": "beautifulsoup4",
+        "sklearn": "scikit-learn",
+        "yaml": "pyyaml",
+        "cv2": "opencv-python",
+    }
+    stdlib = {
+        "argparse", "asyncio", "csv", "datetime", "functools", "json", "logging", "os",
+        "pathlib", "re", "sys", "time", "typing", "uuid", "subprocess", "tempfile",
+        "http", "collections", "itertools", "math", "random",
+    }
+    imports = set()
+    for code in (agent_code, main_code):
+        for line in code.splitlines():
+            m1 = re.match(r"^\s*import\s+([a-zA-Z0-9_\.]+)", line)
+            m2 = re.match(r"^\s*from\s+([a-zA-Z0-9_\.]+)\s+import", line)
+            mod = None
+            if m1:
+                mod = m1.group(1).split(".")[0]
+            elif m2:
+                mod = m2.group(1).split(".")[0]
+            if mod and mod not in stdlib:
+                imports.add(mapping.get(mod, mod))
+    return imports
+
+
+def repair_file(file_name: str, current: str, issues: list[str], spec: Dict[str, Any]) -> str:
+    if not issues:
+        return current
+    system = "You are a senior Python maintainer. Fix code exactly and output raw file content only."
+    user = f"""\
+Repair this {file_name}. Keep behavior aligned to the spec and fix every listed issue.
+Output ONLY raw file content (no markdown/prose).
+
+Spec:
+{json.dumps(spec, indent=2)}
+
+Issues:
+{json.dumps(issues, indent=2)}
+
+Current {file_name}:
+{current}
+"""
+    raw = generate_with_retry(system, user, f"repair_{file_name}")
+    return clean_output(raw, file_name)
+
 # ─────────────────────────────────────────────
 #  RETRY WRAPPER
 # ─────────────────────────────────────────────
@@ -591,6 +702,15 @@ class CodeGeneratorAgent:
         raw = generate_with_retry(SYSTEM_README, prompt_readme(spec), "README.md")
         files["README.md"] = clean_output(raw, "README.md")
 
+        # Quality-repair loop: generate -> validate -> targeted repair
+        for _ in range(MAX_REPAIR_ROUNDS):
+            issues = quality_issues(files, spec)
+            if not any(issues.values()):
+                break
+            for fname in ("agent.py", "main.py", "requirements.txt"):
+                if issues.get(fname):
+                    files[fname] = repair_file(fname, files.get(fname, ""), issues[fname], spec)
+
         logger.info("All files generated: %s", list(files.keys()))
         validate_output(files)
         return files
@@ -613,8 +733,8 @@ if __name__ == "__main__":
     # Accept spec path from argument, or try default filenames
     if len(sys.argv) > 1:
         spec_path = sys.argv[1]
-    elif os.path.exists("final_agent.json"):
-        spec_path = "final_agent.json"
+    elif os.path.exists(os.getenv("FINAL_AGENT_JSON_PATH", "final_agent.json")):
+        spec_path = os.getenv("FINAL_AGENT_JSON_PATH", "final_agent.json")
     else:
         print("Spec file not found. Tried: final_agent.json")
         print("Usage: python agentbuild.py <path_to_spec.json>")
@@ -627,7 +747,7 @@ if __name__ == "__main__":
     try:
         files = run_code_generator(spec)
 
-        output_dir = "generated_agent"
+        output_dir = os.getenv("GENERATED_AGENT_DIR", "generated_agent")
         os.makedirs(output_dir, exist_ok=True)
 
         print("\n── Generated Files ──")

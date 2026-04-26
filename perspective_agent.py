@@ -3,7 +3,7 @@
  PERSPECTIVE EXTRACTOR AGENT
  Configuration-Driven Agentic System
 ========================================================
- Model  : mistral:7b (via Ollama)
+ Model  : Groq Chat Completions
  Role   : Classify user input as 'agent_building' or
           'conversational', then route accordingly.
  Routes :
@@ -15,19 +15,18 @@
 import os
 import sys
 
-import requests
 import json
 import re
 import logging
 import csv
 from typing import Dict, Any
 
+from groq_utils import DEFAULT_GROQ_MODEL, groq_chat_json, groq_chat
+
 # ─────────────────────────────────────────────
 #  CONFIG
 # ─────────────────────────────────────────────
-OLLAMA_BASE_URL  = "http://localhost:11434"
-MODEL            = "llama3.2"
-REQUEST_TIMEOUT  = 120          # seconds
+MODEL            = DEFAULT_GROQ_MODEL
 MAX_INPUT_LENGTH = 5000        # characters
 MIN_INPUT_LENGTH = 3           # characters
 
@@ -104,67 +103,12 @@ After your answer, ALWAYS end with exactly this section (do not skip it):
 💡 Agent Opportunity: [Suggest ONE specific, practical agent the user could build \
 that directly relates to their question — keep it to 1–2 sentences.]
 
+---
+✅ Next step: If you want me to build an agent, reply with an agent-generation prompt like:
+"Build me an agent that ..."
+
 Question: {user_input}
 """
-
-
-# ─────────────────────────────────────────────
-#  OLLAMA CALLER
-# ─────────────────────────────────────────────
-
-def call_ollama(prompt: str, temperature: float = 0.1) -> str:
-    """
-    Send a prompt to the local Ollama instance and return the response text.
-
-    Args:
-        prompt      : The full prompt string.
-        temperature : Sampling temperature (lower = more deterministic).
-
-    Returns:
-        Raw string response from the model.
-
-    Raises:
-        ConnectionError : Ollama is not reachable.
-        TimeoutError    : Request exceeded REQUEST_TIMEOUT seconds.
-        RuntimeError    : Any other HTTP or parsing error.
-    """
-    payload = {
-        "model": MODEL,
-        "prompt": prompt,
-        "stream": False,
-        "options": {
-            "temperature": temperature,
-            "top_p": 0.9,
-            "num_predict": 512,
-        }
-    }
-
-    try:
-        logger.debug("Calling Ollama (%s) ...", MODEL)
-        response = requests.post(
-            f"{OLLAMA_BASE_URL}/api/generate",
-            json=payload,
-            timeout=REQUEST_TIMEOUT
-        )
-        response.raise_for_status()
-        text = response.json().get("response", "").strip()
-        logger.debug("Ollama responded (%d chars)", len(text))
-        return text
-
-    except requests.exceptions.ConnectionError:
-        raise ConnectionError(
-            f"❌ Cannot connect to Ollama at {OLLAMA_BASE_URL}. "
-            "Please make sure Ollama is running (`ollama serve`)."
-        )
-    except requests.exceptions.Timeout:
-        raise TimeoutError(
-            f"❌ Ollama request timed out after {REQUEST_TIMEOUT}s. "
-            "Try again or increase REQUEST_TIMEOUT."
-        )
-    except requests.exceptions.HTTPError as exc:
-        raise RuntimeError(f"❌ Ollama HTTP error: {exc}")
-    except (KeyError, ValueError) as exc:
-        raise RuntimeError(f"❌ Failed to parse Ollama response: {exc}")
 
 
 # ─────────────────────────────────────────────
@@ -303,11 +247,13 @@ def perspective_agent(user_input: str) -> Dict[str, Any]:
     # ── Step 2: Classify ──────────────────────
     logger.info("Classifying input ...")
     classification_prompt = CLASSIFICATION_PROMPT.format(user_input=user_input)
-    raw_response = call_ollama(classification_prompt, temperature=0.1)
-    logger.debug("Raw classification response:\n%s", raw_response)
-
-    # ── Step 3: Parse classification ──────────
-    parsed = extract_json_from_response(raw_response)
+    parsed = groq_chat_json(
+        system="Return ONLY the JSON object. No prose. No markdown.",
+        user=classification_prompt,
+        model=MODEL,
+        temperature=0.0,
+        max_tokens=512,
+    )
 
     classification = parsed.get("classification", "conversational").lower().strip()
     user_text      = parsed.get("user_text", user_input).strip()
@@ -345,7 +291,15 @@ def perspective_agent(user_input: str) -> Dict[str, Any]:
     else:
         logger.info("Route → Code Interface Agent (conversational)")
         conv_prompt = CONVERSATIONAL_PROMPT.format(user_input=user_input)
-        conversational_response = call_ollama(conv_prompt, temperature=0.7)
+        conversational_response = groq_chat(
+            messages=[
+                {"role": "system", "content": "Answer clearly and concisely."},
+                {"role": "user", "content": conv_prompt},
+            ],
+            model=MODEL,
+            temperature=0.7,
+            max_tokens=700,
+        )
 
         return {
             "route"                  : "code_interface",
@@ -363,8 +317,7 @@ def perspective_agent(user_input: str) -> Dict[str, Any]:
 # ─────────────────────────────────────────────
 
 if __name__ == "__main__":
-
-    csv_path = "input.csv"
+    csv_path = os.getenv("INPUT_CSV_PATH", "input.csv")
     if not os.path.exists(csv_path):
         print(f"⚠  {csv_path} not found.")
         sys.exit(1)
@@ -384,9 +337,9 @@ if __name__ == "__main__":
 
         # Route-based output filename
         if result["route"] == "json_extractor":
-            output_file = "build_agent_output.json"
+            output_file = os.getenv("BUILD_AGENT_OUTPUT_PATH", "build_agent_output.json")
         else:
-            output_file = "conversational_output.json"
+            output_file = os.getenv("CONVERSATIONAL_OUTPUT_PATH", "conversational_output.json")
 
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(result, f, indent=2)
@@ -394,5 +347,5 @@ if __name__ == "__main__":
         print(f"\n✅ Output saved to {output_file}")
         print(json.dumps(result, indent=2))
 
-    except (ValueError, ConnectionError, TimeoutError, RuntimeError) as exc:
+    except (ValueError, RuntimeError) as exc:
         print(f"\n⚠  Error: {exc}")

@@ -1,674 +1,635 @@
-/* ═══════════════════════════════════════════════════════════════
-   AgentForge — Frontend Application Logic
-   ═══════════════════════════════════════════════════════════════ */
-
 (() => {
-    'use strict';
+  "use strict";
 
-    // ─── Constants ─────────────────────────────────────────────
-    const API_BASE = window.location.origin;
-    const POLL_INTERVAL = 1500; // ms
+  const API = window.location.origin;
+  const POLL_MS = 1200;
+  const TOKEN_KEY = "agentforge_token";
+  const USER_KEY = "agentforge_user";
 
-    // ─── DOM Elements ──────────────────────────────────────────
-    const $ = (sel) => document.querySelector(sel);
-    const $$ = (sel) => document.querySelectorAll(sel);
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => document.querySelectorAll(s);
 
-    const promptInput      = $('#prompt-input');
-    const charCount        = $('#char-count');
-    const btnSubmit        = $('#btn-submit');
-    const btnHistory       = $('#btn-history');
-    const btnCloseHistory  = $('#btn-close-history');
-    const sidebarOverlay   = $('#sidebar-overlay');
-    const historySidebar   = $('#history-sidebar');
-    const historyList      = $('#history-list');
-    const pipelineTracker  = $('#pipeline-tracker');
-    const pipelineStatusTx = $('#pipeline-status-text');
-    const welcomeState     = $('#welcome-state');
-    const convPanel        = $('#conversational-panel');
-    const codeOutputPanel  = $('#code-output-panel');
-    const errorPanel       = $('#error-panel');
-    const errorMessage     = $('#error-message');
-    const btnRetry         = $('#btn-retry');
-    const verifierCard     = $('#verifier-card');
-    const tabBar           = $('#tab-bar');
-    const toastContainer   = $('#toast-container');
+  // ═══════════════════════════════════════════
+  //  DOM REFS
+  // ═══════════════════════════════════════════
 
-    // ─── State ─────────────────────────────────────────────────
-    let currentJobId = null;
-    let pollTimer    = null;
-    let isSubmitting = false;
+  const elAuthOverlay = $("#authOverlay");
+  const elAppShell = $("#appShell");
+  const elLoginForm = $("#loginForm");
+  const elSignupForm = $("#signupForm");
+  const elLoginError = $("#loginError");
+  const elSignupError = $("#signupError");
 
-    // ─── Background Canvas (Particle Network) ─────────────────
-    function initBackground() {
-        const canvas = $('#bg-canvas');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-        let w, h;
+  const elHistory = $("#history");
+  const elStatus = $("#serverStatus");
+  const elStatusValue = $("#serverStatus .value");
+  const elStatusDot = $("#serverStatus .dot");
+  const elChat = $("#chat");
+  const elPrompt = $("#prompt");
+  const elCounter = $("#counter");
+  const elBtnRun = $("#btnRun");
+  const elBtnTerminate = $("#btnTerminate");
+  const elBtnClear = $("#btnClear");
+  const elBtnLogout = $("#btnLogout");
+  const elPipeline = $("#pipeline");
+  const elPipelineStatus = $("#pipelineStatus");
+  const elRouteBadge = $("#routeBadge");
+  const elToastHost = $("#toastHost");
+  const elVerifiedScore = $("#verifiedScore");
+  const elBtnConfirmSpec = $("#btnConfirmSpec");
+  const elUserAvatar = $("#userAvatar");
+  const elUserName = $("#userName");
 
-        function resize() {
-            w = canvas.width = window.innerWidth;
-            h = canvas.height = window.innerHeight;
-        }
+  const outReport = $("#outReport");
+  const outAgent = $("#outAgent");
+  const outMain = $("#outMain");
+  const outReq = $("#outReq");
+  const outReadme = $("#outReadme");
+  const outSpec = $("#outSpec");
 
-        function createParticles() {
-            particles = [];
-            const count = Math.floor((w * h) / 18000);
-            for (let i = 0; i < count; i++) {
-                particles.push({
-                    x: Math.random() * w,
-                    y: Math.random() * h,
-                    vx: (Math.random() - 0.5) * 0.3,
-                    vy: (Math.random() - 0.5) * 0.3,
-                    r: Math.random() * 1.5 + 0.5,
-                    o: Math.random() * 0.4 + 0.1,
-                });
-            }
-        }
+  let jobId = null;
+  let pollTimer = null;
+  let isRunning = false;
+  let awaitingSpecConfirmation = false;
+  let latestResult = null;
+  let reportView = "summary";
 
-        function draw() {
-            ctx.clearRect(0, 0, w, h);
 
-            // Draw connections
-            for (let i = 0; i < particles.length; i++) {
-                for (let j = i + 1; j < particles.length; j++) {
-                    const dx = particles[i].x - particles[j].x;
-                    const dy = particles[i].y - particles[j].y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < 120) {
-                        ctx.beginPath();
-                        ctx.moveTo(particles[i].x, particles[i].y);
-                        ctx.lineTo(particles[j].x, particles[j].y);
-                        ctx.strokeStyle = `rgba(0, 180, 220, ${0.06 * (1 - dist / 120)})`;
-                        ctx.lineWidth = 0.5;
-                        ctx.stroke();
-                    }
-                }
-            }
+  // ═══════════════════════════════════════════
+  //  AUTH
+  // ═══════════════════════════════════════════
 
-            // Draw particles
-            for (const p of particles) {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(0, 200, 255, ${p.o})`;
-                ctx.fill();
+  function getToken() { return localStorage.getItem(TOKEN_KEY); }
+  function setToken(t) { localStorage.setItem(TOKEN_KEY, t); }
+  function clearToken() { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); }
 
-                // Move
-                p.x += p.vx;
-                p.y += p.vy;
+  function getUser() {
+    try { return JSON.parse(localStorage.getItem(USER_KEY)); } catch { return null; }
+  }
+  function setUser(u) { localStorage.setItem(USER_KEY, JSON.stringify(u)); }
 
-                // Bounce
-                if (p.x < 0 || p.x > w) p.vx *= -1;
-                if (p.y < 0 || p.y > h) p.vy *= -1;
-            }
+  function authHeaders() {
+    const t = getToken();
+    return t ? { Authorization: `Bearer ${t}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
+  }
 
-            requestAnimationFrame(draw);
-        }
+  function showAuth() {
+    elAuthOverlay.classList.remove("hidden");
+    elAppShell.classList.add("hidden");
+  }
 
-        window.addEventListener('resize', () => {
-            resize();
-            createParticles();
+  function showApp(user) {
+    elAuthOverlay.classList.add("hidden");
+    elAppShell.classList.remove("hidden");
+    if (user) {
+      elUserAvatar.textContent = (user.username || "?")[0].toUpperCase();
+      elUserName.textContent = user.username || "User";
+    }
+  }
+
+  async function tryAutoLogin() {
+    const token = getToken();
+    if (!token) { showAuth(); return; }
+    try {
+      const r = await fetch(`${API}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+      if (r.ok) {
+        const data = await r.json();
+        setUser(data.user);
+        showApp(data.user);
+        initApp();
+      } else {
+        clearToken();
+        showAuth();
+      }
+    } catch {
+      clearToken();
+      showAuth();
+    }
+  }
+
+  function initAuthTabs() {
+    $$(".auth-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        $$(".auth-tab").forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+        const target = tab.dataset.authTab;
+        $$(".auth-form").forEach((f) => f.classList.remove("active"));
+        $(`.auth-form[data-auth-form="${target}"]`)?.classList.add("active");
+        elLoginError.textContent = "";
+        elSignupError.textContent = "";
+      });
+    });
+  }
+
+  function initAuthForms() {
+    elLoginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      elLoginError.textContent = "";
+      const email = $("#loginEmail").value.trim();
+      const password = $("#loginPassword").value;
+      try {
+        const r = await fetch(`${API}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
         });
-
-        resize();
-        createParticles();
-        draw();
-    }
-
-    // ─── Toast Notifications ───────────────────────────────────
-    function showToast(message, type = 'info') {
-        const icons = { success: '✅', error: '❌', info: 'ℹ️' };
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `<span class="toast-icon">${icons[type]}</span><span>${message}</span>`;
-        toastContainer.appendChild(toast);
-
-        setTimeout(() => {
-            toast.classList.add('leaving');
-            setTimeout(() => toast.remove(), 300);
-        }, 4000);
-    }
-
-    // ─── Character Counter ─────────────────────────────────────
-    function updateCharCount() {
-        const len = promptInput.value.length;
-        charCount.textContent = `${len} / 5000`;
-        charCount.style.color = len > 4500 ? '#ef4444' : '';
-    }
-
-    // ─── Suggestion Chips ──────────────────────────────────────
-    function initSuggestions() {
-        $$('.suggestion-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                promptInput.value = chip.dataset.prompt;
-                updateCharCount();
-                promptInput.focus();
-            });
-        });
-    }
-
-    // ─── History Sidebar ───────────────────────────────────────
-    function toggleHistory(show) {
-        if (show) {
-            historySidebar.classList.remove('hidden');
-            sidebarOverlay.classList.remove('hidden');
-            requestAnimationFrame(() => {
-                historySidebar.classList.add('visible');
-                sidebarOverlay.classList.add('visible');
-            });
-            loadHistory();
+        const data = await r.json();
+        if (data.success) {
+          setToken(data.token);
+          setUser(data.user);
+          showApp(data.user);
+          initApp();
         } else {
-            historySidebar.classList.remove('visible');
-            sidebarOverlay.classList.remove('visible');
-            setTimeout(() => {
-                historySidebar.classList.add('hidden');
-                sidebarOverlay.classList.add('hidden');
-            }, 500);
+          elLoginError.textContent = data.error || "Login failed";
         }
-    }
+      } catch {
+        elLoginError.textContent = "Cannot connect to server";
+      }
+    });
 
-    async function loadHistory() {
-        try {
-            const res = await fetch(`${API_BASE}/api/history`);
-            const data = await res.json();
-
-            if (data.length === 0) {
-                historyList.innerHTML = '<div class="history-empty">No prompts yet</div>';
-                return;
-            }
-
-            historyList.innerHTML = data.map(item => {
-                const date = new Date(item.timestamp);
-                const timeStr = date.toLocaleString();
-                return `
-                    <div class="history-item" data-prompt="${escapeAttr(item.prompt)}">
-                        <div class="history-timestamp">${timeStr}</div>
-                        <div class="history-prompt">${escapeHtml(item.prompt)}</div>
-                    </div>
-                `;
-            }).join('');
-
-            // Click handler for history items
-            historyList.querySelectorAll('.history-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    promptInput.value = item.dataset.prompt;
-                    updateCharCount();
-                    toggleHistory(false);
-                    promptInput.focus();
-                });
-            });
-        } catch (err) {
-            historyList.innerHTML = '<div class="history-empty">Failed to load history</div>';
-        }
-    }
-
-    // ─── Pipeline UI ───────────────────────────────────────────
-    const stepElements = [
-        $('#step-perspective'),
-        $('#step-extractor'),
-        $('#step-builder'),
-        $('#step-verifier'),
-        $('#step-interface'),
-    ];
-
-    function resetPipeline() {
-        stepElements.forEach(el => {
-            el.className = 'pipeline-step pending';
+    elSignupForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      elSignupError.textContent = "";
+      const username = $("#signupUsername").value.trim();
+      const email = $("#signupEmail").value.trim();
+      const password = $("#signupPassword").value;
+      try {
+        const r = await fetch(`${API}/api/auth/signup`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, email, password }),
         });
-        pipelineStatusTx.textContent = '';
-        verifierCard.classList.add('hidden');
-    }
-
-    function updatePipelineUI(statusData) {
-        if (!statusData || !statusData.steps) return;
-
-        statusData.steps.forEach((step, i) => {
-            if (stepElements[i]) {
-                stepElements[i].className = `pipeline-step ${step.status}`;
-            }
-        });
-
-        // Status text
-        const currentIdx = statusData.current_step;
-        if (statusData.status === 'done') {
-            pipelineStatusTx.textContent = '✓ Complete';
-            pipelineStatusTx.style.color = '#22c55e';
-        } else if (statusData.status === 'error') {
-            pipelineStatusTx.textContent = '✗ Error';
-            pipelineStatusTx.style.color = '#ef4444';
-        } else if (currentIdx < 5) {
-            const names = ['Classifying...', 'Extracting...', 'Generating...', 'Verifying...', 'Documenting...'];
-            pipelineStatusTx.textContent = names[currentIdx] || '';
-            pipelineStatusTx.style.color = '#00d4ff';
-        }
-    }
-
-    // ─── Submit Prompt ─────────────────────────────────────────
-    async function submitPrompt() {
-        const prompt = promptInput.value.trim();
-        if (!prompt || isSubmitting) return;
-
-        if (prompt.length < 3) {
-            showToast('Prompt too short — min 3 characters.', 'error');
-            return;
-        }
-
-        isSubmitting = true;
-        setSubmitLoading(true);
-        resetPipeline();
-        showPanel('none'); // hide all output panels
-
-        try {
-            const res = await fetch(`${API_BASE}/api/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt }),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                showToast(data.error || 'Request failed', 'error');
-                setSubmitLoading(false);
-                isSubmitting = false;
-                return;
-            }
-
-            currentJobId = data.job_id;
-            showToast('Pipeline started — generating your agent...', 'info');
-            startPolling();
-        } catch (err) {
-            showToast('Cannot reach server. Is it running?', 'error');
-            setSubmitLoading(false);
-            isSubmitting = false;
-        }
-    }
-
-    function setSubmitLoading(loading) {
-        const btnText = btnSubmit.querySelector('.btn-text');
-        const btnArrow = btnSubmit.querySelector('.btn-arrow');
-        const btnSpinner = btnSubmit.querySelector('.btn-spinner');
-
-        if (loading) {
-            btnText.textContent = 'Generating...';
-            btnArrow.style.display = 'none';
-            btnSpinner.style.display = 'block';
-            btnSubmit.disabled = true;
+        const data = await r.json();
+        if (data.success) {
+          setToken(data.token);
+          setUser(data.user);
+          showApp(data.user);
+          initApp();
         } else {
-            btnText.textContent = 'Generate';
-            btnArrow.style.display = 'block';
-            btnSpinner.style.display = 'none';
-            btnSubmit.disabled = false;
+          elSignupError.textContent = data.error || "Sign up failed";
         }
-    }
+      } catch {
+        elSignupError.textContent = "Cannot connect to server";
+      }
+    });
+  }
 
-    // ─── Polling ───────────────────────────────────────────────
-    function startPolling() {
+
+  // ═══════════════════════════════════════════
+  //  UTILITIES
+  // ═══════════════════════════════════════════
+
+  function toast(message, type = "info") {
+    const node = document.createElement("div");
+    node.className = `toast ${type}`;
+    node.textContent = message;
+    elToastHost.appendChild(node);
+    setTimeout(() => node.remove(), 4500);
+  }
+
+  function addMessage(role, text) {
+    const msg = document.createElement("div");
+    msg.className = `msg ${role}`;
+    msg.textContent = text;
+    elChat.appendChild(msg);
+    elChat.scrollTop = elChat.scrollHeight;
+  }
+
+  function setRunning(running) {
+    isRunning = running;
+    elBtnRun.disabled = running;
+    elBtnRun.textContent = running ? "Running…" : "Run";
+    elBtnTerminate.disabled = !running || !jobId;
+  }
+
+  function setRoute(route) {
+    if (!route) { elRouteBadge.innerHTML = ""; return; }
+    const label = route === "conversational" ? "Conversational" : "Agent Building";
+    elRouteBadge.innerHTML = `<span class="badge">${label}</span>`;
+  }
+
+  function updateCounter() {
+    elCounter.textContent = `${elPrompt.value.length} / 5000`;
+  }
+
+  function escapeHtml(str) {
+    return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+
+  // ═══════════════════════════════════════════
+  //  SERVER STATUS & HISTORY
+  // ═══════════════════════════════════════════
+
+  async function checkServer() {
+    try {
+      const r = await fetch(`${API}/api/history`, { cache: "no-store", headers: authHeaders() });
+      if (!r.ok) throw new Error();
+      elStatusValue.textContent = "Online";
+      elStatusDot.style.background = "var(--good)";
+    } catch {
+      elStatusValue.textContent = "Offline";
+      elStatusDot.style.background = "var(--bad)";
+    }
+  }
+
+  function renderHistory(items) {
+    if (!items || items.length === 0) {
+      elHistory.innerHTML = '<div class="history-item"><div class="history-text">No prompts yet.</div></div>';
+      return;
+    }
+    elHistory.innerHTML = items
+      .map((it) => {
+        const ts = new Date(it.timestamp || Date.now()).toLocaleString();
+        const text = (it.prompt || "").slice(0, 200);
+        const safe = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        return `
+          <div class="history-item" data-prompt="${encodeURIComponent(it.prompt || "")}">
+            <div class="history-ts">${ts}</div>
+            <div class="history-text">${safe}</div>
+          </div>
+        `;
+      })
+      .join("");
+
+    $$("#history .history-item").forEach((node) => {
+      node.addEventListener("click", () => {
+        const prompt = decodeURIComponent(node.dataset.prompt || "");
+        if (prompt) {
+          elPrompt.value = prompt;
+          updateCounter();
+          elPrompt.focus();
+        }
+      });
+    });
+  }
+
+  async function loadHistory() {
+    try {
+      const r = await fetch(`${API}/api/history`, { cache: "no-store", headers: authHeaders() });
+      if (r.status === 401) {
+        clearToken();
+        showAuth();
+        return;
+      }
+      renderHistory(await r.json());
+    } catch {
+      renderHistory([]);
+    }
+  }
+
+
+  // ═══════════════════════════════════════════
+  //  PIPELINE RENDERING
+  // ═══════════════════════════════════════════
+
+  function renderPipeline(steps, statusData) {
+    if (!steps) { elPipeline.innerHTML = ""; return; }
+    elPipeline.innerHTML = steps
+      .map((s) => {
+        const st = s.status || "pending";
+        const labels = { error: "Error", done: "Done", running: "Running", skipped: "Skipped", waiting: "Waiting", pending: "Pending" };
+        const right = labels[st] || st;
+        return `
+          <div class="step ${st}">
+            <div class="icon">${s.icon || "•"}</div>
+            <div class="left">
+              <div class="name">${s.name}</div>
+              <div class="desc">${s.description}</div>
+              ${s.error ? `<div class="desc" style="color:var(--bad)">${escapeHtml(s.error).slice(0, 180)}</div>` : ""}
+            </div>
+            <div class="right">${right}</div>
+          </div>
+        `;
+      })
+      .join("");
+
+    if (!statusData) { elPipelineStatus.textContent = "Idle"; return; }
+    const statusLabels = { running: "Running", done: "Complete", error: "Error", awaiting_confirmation: "Awaiting Confirmation" };
+    elPipelineStatus.textContent = statusLabels[statusData.status] || "Idle";
+  }
+
+  function renderReport(data) {
+    const verifier = data.verifier_result || {};
+    const attempts = data.attempts || [];
+
+    if (reportView === "verifier") { outReport.textContent = JSON.stringify(verifier, null, 2); return; }
+    if (reportView === "attempts") { outReport.textContent = JSON.stringify(attempts, null, 2); return; }
+
+    const lines = [];
+    lines.push(`Job: ${data.id || "-"}`);
+    lines.push(`Route: ${data.route || "-"}`);
+    lines.push(`Status: ${data.status || "-"}`);
+    lines.push(`Verified Score: ${verifier.correctness_score ?? "--"}`);
+    lines.push(`Band: ${verifier.correctness_band || "--"}`);
+    lines.push(`Decision: ${verifier.delivery_decision || "--"}`);
+    lines.push(`Notes: ${verifier.delivery_notes || "--"}`);
+    lines.push(`Regeneration Attempts: ${verifier.regeneration_attempts ?? attempts.length - 1}`);
+    outReport.textContent = lines.join("\n");
+  }
+
+  function setArtifacts(data) {
+    latestResult = data;
+    renderReport(data);
+    const files = data.files || {};
+    outAgent.textContent = files["agent.py"] || "";
+    outMain.textContent = files["main.py"] || "";
+    outReq.textContent = files["requirements.txt"] || "";
+    outReadme.textContent = files["README.md"] || "";
+    outSpec.value = JSON.stringify(data.agent_spec || {}, null, 2);
+    const score = data.verifier_result?.correctness_score;
+    elVerifiedScore.textContent = score ?? "--";
+  }
+
+  function activateTab(tabId) {
+    $$(".tab").forEach((t) => t.classList.remove("active"));
+    $$(".pane").forEach((p) => p.classList.remove("active"));
+    $(`.tab[data-tab="${tabId}"]`)?.classList.add("active");
+    $(`.pane[data-pane="${tabId}"]`)?.classList.add("active");
+  }
+
+
+  // ═══════════════════════════════════════════
+  //  PIPELINE EXECUTION
+  // ═══════════════════════════════════════════
+
+  async function start(prompt) {
+    setRunning(true);
+    setRoute(null);
+    addMessage("user", prompt);
+    addMessage("system", "Starting pipeline…");
+    awaitingSpecConfirmation = false;
+    setArtifacts({ files: {}, agent_spec: {}, verifier_result: {}, attempts: [] });
+    elVerifiedScore.textContent = "--";
+    activateTab("report");
+
+    try {
+      const r = await fetch(`${API}/api/generate`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ prompt }),
+      });
+      const data = await r.json();
+      if (r.status === 401) {
+        toast("Session expired. Please login again.", "error");
+        clearToken();
+        showAuth();
+        setRunning(false);
+        return;
+      }
+      if (r.status === 429) {
+        setRunning(false);
+        const wait = data.retry_after || 60;
+        toast(`Rate limit reached. Try again in ${wait}s.`, "error");
+        addMessage("assistant", `⏳ Rate limit: please wait ${wait} seconds before trying again.`);
+        return;
+      }
+      if (r.status === 503) {
+        setRunning(false);
+        toast("Server busy. Try again shortly.", "error");
+        addMessage("assistant", "Server is at capacity. Please try again in a minute.");
+        return;
+      }
+      if (!r.ok) {
+        setRunning(false);
+        toast(data.error || "Request failed", "error");
+        addMessage("assistant", `Error: ${data.error || "Request failed"}`);
+        return;
+      }
+      jobId = data.job_id;
+      toast("Pipeline started", "info");
+      beginPolling();
+    } catch (e) {
+      setRunning(false);
+      toast("Cannot reach backend. Start: python server.py", "error");
+      addMessage("assistant", "Cannot reach backend. Start: python server.py");
+    }
+  }
+
+  function beginPolling() {
+    stopPolling();
+    pollTimer = setInterval(poll, POLL_MS);
+    poll();
+  }
+
+  function stopPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = null;
+  }
+
+  async function poll() {
+    if (!jobId) return;
+    try {
+      const r = await fetch(`${API}/api/status/${jobId}`, { cache: "no-store", headers: authHeaders() });
+      if (r.status === 401) {
         stopPolling();
-        pollTimer = setInterval(pollStatus, POLL_INTERVAL);
-        pollStatus(); // immediate first call
+        clearToken();
+        showAuth();
+        toast("Session expired. Please login again.", "error");
+        return;
+      }
+      const d = await r.json();
+      renderPipeline(d.steps, d);
+      setRoute(d.route);
+
+      if (d.status === "done") {
+        stopPolling();
+        setRunning(false);
+        awaitingSpecConfirmation = false;
+        toast("Done", "success");
+        await fetchResult();
+        await loadHistory();
+      } else if (d.status === "terminated") {
+        stopPolling();
+        setRunning(false);
+        awaitingSpecConfirmation = false;
+        toast("Run terminated", "info");
+        addMessage("assistant", d.error || "Run terminated by user.");
+        await fetchResult();
+      } else if (d.status === "awaiting_confirmation") {
+        stopPolling();
+        setRunning(false);
+        awaitingSpecConfirmation = true;
+        await fetchResult();
+        activateTab("spec");
+        addMessage("assistant", "Review the extracted JSON, edit if needed, then click Confirm JSON & Generate.");
+        toast("Waiting for JSON confirmation", "info");
+      } else if (d.status === "error") {
+        stopPolling();
+        setRunning(false);
+        awaitingSpecConfirmation = false;
+        toast("Pipeline error", "error");
+        addMessage("assistant", d.error || "Pipeline error");
+      }
+    } catch { /* keep polling */ }
+  }
+
+  async function fetchResult() {
+    if (!jobId) return;
+    const r = await fetch(`${API}/api/result/${jobId}`, { cache: "no-store", headers: authHeaders() });
+    if (r.status === 401) {
+      clearToken();
+      showAuth();
+      toast("Session expired. Please login again.", "error");
+      return;
     }
+    const data = await r.json();
+    setArtifacts(data);
 
-    function stopPolling() {
-        if (pollTimer) {
-            clearInterval(pollTimer);
-            pollTimer = null;
-        }
-    }
-
-    async function pollStatus() {
-        if (!currentJobId) return;
-
-        try {
-            const res = await fetch(`${API_BASE}/api/status/${currentJobId}`);
-            const data = await res.json();
-
-            updatePipelineUI(data);
-
-            if (data.status === 'done' || data.status === 'error') {
-                stopPolling();
-                setSubmitLoading(false);
-                isSubmitting = false;
-
-                if (data.status === 'done') {
-                    showToast('Pipeline complete!', 'success');
-                    fetchAndDisplayResult();
-                } else {
-                    showToast('Pipeline encountered an error.', 'error');
-                    showError(data.error || 'Unknown error occurred.');
-                }
-            }
-        } catch (err) {
-            // Network error, keep polling
-        }
-    }
-
-    // ─── Fetch & Display Result ────────────────────────────────
-    async function fetchAndDisplayResult() {
-        if (!currentJobId) return;
-
-        try {
-            const res = await fetch(`${API_BASE}/api/result/${currentJobId}`);
-            const data = await res.json();
-
-            if (data.route === 'conversational') {
-                displayConversational(data);
-            } else {
-                displayAgentBuild(data);
-            }
-        } catch (err) {
-            showError('Failed to fetch results: ' + err.message);
-        }
-    }
-
-    // ─── Display: Conversational ───────────────────────────────
-    function displayConversational(data) {
-        showPanel('conversational');
-
-        const responseEl = $('#conv-response');
-        const text = data.conversational_response || 'No response received.';
-
-        // Typing animation
-        responseEl.innerHTML = '';
-        typeText(responseEl, text);
-    }
-
-    function typeText(el, text, speed = 8) {
-        let i = 0;
-        el.innerHTML = '<span class="typing-cursor"></span>';
-
-        function tick() {
-            if (i < text.length) {
-                // Insert character before cursor
-                const cursor = el.querySelector('.typing-cursor');
-                const charNode = document.createTextNode(text[i]);
-                el.insertBefore(charNode, cursor);
-                i++;
-                setTimeout(tick, speed);
-            } else {
-                // Remove cursor after done
-                const cursor = el.querySelector('.typing-cursor');
-                if (cursor) {
-                    setTimeout(() => cursor.remove(), 2000);
-                }
-            }
-        }
-        tick();
-    }
-
-    // ─── Display: Agent Build ──────────────────────────────────
-    function displayAgentBuild(data) {
-        showPanel('code-output');
-
-        // Populate code tabs
-        const files = data.files || {};
-
-        setCodeContent('code-agent', files['agent.py'] || '# No agent.py generated', 'python');
-        setCodeContent('code-main', files['main.py'] || '# No main.py generated', 'python');
-        setCodeContent('code-requirements', files['requirements.txt'] || '# No requirements.txt generated', 'text');
-        setCodeContent('code-spec', JSON.stringify(data.agent_spec || {}, null, 2), 'json');
-
-        // README as markdown
-        const readmeContent = files['README.md'] || '*No README generated.*';
-        $('#readme-content').innerHTML = renderMarkdown(readmeContent);
-
-        // Report (output.md)
-        const reportContent = data.output_md || '*No report generated yet.*';
-        $('#report-content').innerHTML = renderMarkdown(reportContent);
-
-        // Verifier Score
-        if (data.verifier_result) {
-            displayVerifier(data.verifier_result);
-        }
-
-        // Activate first tab
-        activateTab('report');
-    }
-
-    function setCodeContent(elementId, code, language) {
-        const el = $(`#${elementId}`);
-        if (!el) return;
-        el.textContent = code;
-        el.className = `language-${language}`;
-        hljs.highlightElement(el);
-    }
-
-    function renderMarkdown(md) {
-        try {
-            const html = marked.parse(md, {
-                breaks: true,
-                gfm: true,
-            });
-            // Post-process: highlight code blocks
-            const container = document.createElement('div');
-            container.innerHTML = html;
-            container.querySelectorAll('pre code').forEach(block => {
-                hljs.highlightElement(block);
-            });
-            return container.innerHTML;
-        } catch {
-            return `<pre>${escapeHtml(md)}</pre>`;
-        }
-    }
-
-    // ─── Display: Verifier ─────────────────────────────────────
-    function displayVerifier(result) {
-        verifierCard.classList.remove('hidden');
-
-        const pct = result.overall_correctness_percentage || 0;
-        const status = result.overall_status || 'UNKNOWN';
-        const aiReview = result.ai_review || {};
-
-        // Animate gauge
-        const circumference = 326.73;
-        const offset = circumference - (pct / 100) * circumference;
-        const gaugeFill = $('#gauge-fill');
-
-        // Set color based on score
-        let gaugeColor = '#ef4444'; // red
-        if (pct >= 80) gaugeColor = '#22c55e'; // green
-        else if (pct >= 60) gaugeColor = '#f59e0b'; // amber
-
-        gaugeFill.style.stroke = gaugeColor;
-
-        // Animate after a small delay
-        setTimeout(() => {
-            gaugeFill.style.strokeDashoffset = offset;
-        }, 200);
-
-        // Score value animation
-        animateValue($('#score-value'), 0, pct, 1200);
-
-        // Label
-        const scoreLabel = $('#score-label');
-        scoreLabel.textContent = status;
-        scoreLabel.style.color = gaugeColor;
-
-        // Details
-        const details = $('#verifier-details');
-        let detailsHtml = '';
-
-        if (aiReview.summary) {
-            detailsHtml += `
-                <div class="verifier-detail-item">
-                    <span class="detail-label">Verdict</span>
-                    <span class="detail-value">${escapeHtml(aiReview.summary)}</span>
-                </div>
-            `;
-        }
-
-        if (aiReview.implemented_correctly && aiReview.implemented_correctly.length > 0) {
-            detailsHtml += `
-                <div class="verifier-detail-item">
-                    <span class="detail-label">Correct</span>
-                    <span class="detail-value">${aiReview.implemented_correctly.map(i => `✓ ${escapeHtml(i)}`).join('<br>')}</span>
-                </div>
-            `;
-        }
-
-        if (aiReview.issues && aiReview.issues.length > 0) {
-            detailsHtml += `
-                <div class="verifier-detail-item">
-                    <span class="detail-label">Issues</span>
-                    <span class="detail-value">${aiReview.issues.map(i => `• ${escapeHtml(i)}`).join('<br>')}</span>
-                </div>
-            `;
-        }
-
-        details.innerHTML = detailsHtml;
-    }
-
-    function animateValue(el, start, end, duration) {
-        const startTime = performance.now();
-        function update(currentTime) {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            // Ease out
-            const eased = 1 - Math.pow(1 - progress, 3);
-            const current = Math.round(start + (end - start) * eased);
-            el.textContent = `${current}%`;
-            if (progress < 1) {
-                requestAnimationFrame(update);
-            }
-        }
-        requestAnimationFrame(update);
-    }
-
-    // ─── Panel Visibility ──────────────────────────────────────
-    function showPanel(panel) {
-        welcomeState.classList.add('hidden');
-        convPanel.classList.add('hidden');
-        codeOutputPanel.classList.add('hidden');
-        errorPanel.classList.add('hidden');
-
-        switch (panel) {
-            case 'welcome':
-                welcomeState.classList.remove('hidden');
-                break;
-            case 'conversational':
-                convPanel.classList.remove('hidden');
-                break;
-            case 'code-output':
-                codeOutputPanel.classList.remove('hidden');
-                break;
-            case 'error':
-                errorPanel.classList.remove('hidden');
-                break;
-            // 'none' hides all
-        }
-    }
-
-    function showError(msg) {
-        showPanel('error');
-        errorMessage.textContent = msg;
-    }
-
-    // ─── Tabs ──────────────────────────────────────────────────
-    function activateTab(tabId) {
-        // Tab buttons
-        tabBar.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        const activeBtn = tabBar.querySelector(`[data-tab="${tabId}"]`);
-        if (activeBtn) activeBtn.classList.add('active');
-
-        // Tab panes
-        $$('.tab-pane').forEach(p => p.classList.remove('active'));
-        const activePane = $(`[data-pane="${tabId}"]`);
-        if (activePane) activePane.classList.add('active');
-    }
-
-    // ─── Copy to Clipboard ─────────────────────────────────────
-    function handleCopy(btn) {
-        const targetId = btn.dataset.target;
-        const codeEl = $(`#${targetId}`);
-        if (!codeEl) return;
-
-        const text = codeEl.textContent;
-        navigator.clipboard.writeText(text).then(() => {
-            btn.classList.add('copied');
-            const span = btn.querySelector('span');
-            const original = span.textContent;
-            span.textContent = 'Copied!';
-
-            setTimeout(() => {
-                btn.classList.remove('copied');
-                span.textContent = original;
-            }, 2000);
-        }).catch(() => {
-            showToast('Failed to copy to clipboard', 'error');
-        });
-    }
-
-    // ─── Utility Functions ─────────────────────────────────────
-    function escapeHtml(str) {
-        if (!str) return '';
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-
-    function escapeAttr(str) {
-        if (!str) return '';
-        return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
-
-    // ─── Event Listeners ───────────────────────────────────────
-    function initEvents() {
-        // Prompt input
-        promptInput.addEventListener('input', updateCharCount);
-        promptInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                e.preventDefault();
-                submitPrompt();
-            }
-        });
-
-        // Submit button
-        btnSubmit.addEventListener('click', submitPrompt);
-
-        // Retry button
-        btnRetry.addEventListener('click', () => {
-            showPanel('welcome');
-            resetPipeline();
-        });
-
-        // History
-        btnHistory.addEventListener('click', () => toggleHistory(true));
-        btnCloseHistory.addEventListener('click', () => toggleHistory(false));
-        sidebarOverlay.addEventListener('click', () => toggleHistory(false));
-
-        // Tabs
-        tabBar.addEventListener('click', (e) => {
-            const tab = e.target.closest('.tab');
-            if (tab) activateTab(tab.dataset.tab);
-        });
-
-        // Copy buttons
-        document.addEventListener('click', (e) => {
-            const copyBtn = e.target.closest('.btn-copy');
-            if (copyBtn) handleCopy(copyBtn);
-        });
-
-        // Suggestions
-        initSuggestions();
-
-        // Keyboard shortcut hints
-        promptInput.setAttribute('title', 'Ctrl+Enter to submit');
-    }
-
-    // ─── Initialization ────────────────────────────────────────
-    function init() {
-        initBackground();
-        initEvents();
-        updateCharCount();
-        showPanel('welcome');
-        console.log('%c⚡ AgentForge Frontend Loaded', 'color: #00d4ff; font-weight: bold; font-size: 14px;');
-    }
-
-    // Start
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+    if (data.route === "conversational") {
+      addMessage("assistant", data.conversational_response || "");
+      toast(data.next_step_hint || 'Describe the agent you want to build.', "info");
+      elPrompt.value = "";
+      updateCounter();
+      elPrompt.focus();
     } else {
-        init();
+      if (!awaitingSpecConfirmation) {
+        addMessage("assistant", "Agent build complete. Review artifacts on the right.");
+      }
     }
+  }
 
+  async function confirmSpecAndGenerate() {
+    if (!jobId || !awaitingSpecConfirmation) { toast("No job waiting for confirmation", "error"); return; }
+    let spec;
+    try { spec = JSON.parse(outSpec.value || "{}"); } catch { toast("Spec JSON is invalid", "error"); return; }
+
+    setRunning(true);
+    try {
+      const r = await fetch(`${API}/api/confirm/${jobId}`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ agent_spec: spec }),
+      });
+      const data = await r.json();
+      if (!r.ok) { setRunning(false); toast(data.error || "Confirmation failed", "error"); return; }
+      awaitingSpecConfirmation = false;
+      toast("JSON confirmed. Continuing generation.", "info");
+      addMessage("system", "Spec confirmed. Generating code…");
+      beginPolling();
+    } catch {
+      setRunning(false);
+      toast("Could not confirm JSON", "error");
+    }
+  }
+
+  async function terminateRun() {
+    if (!jobId || !isRunning) {
+      toast("No active run to terminate", "error");
+      return;
+    }
+    try {
+      const r = await fetch(`${API}/api/terminate/${jobId}`, {
+        method: "POST",
+        headers: authHeaders(),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        toast(data.error || "Terminate failed", "error");
+        return;
+      }
+      toast("Termination requested", "info");
+      addMessage("system", "Termination requested. Stopping current run...");
+    } catch {
+      toast("Could not request termination", "error");
+    }
+  }
+
+
+  // ═══════════════════════════════════════════
+  //  CLEAR & INIT
+  // ═══════════════════════════════════════════
+
+  function clearUI() {
+    elChat.innerHTML = "";
+    renderPipeline(
+      [
+        { icon: "🔍", name: "Perspective Agent", description: "Classify input", status: "pending" },
+        { icon: "📋", name: "Input Extractor", description: "Extract spec", status: "pending" },
+        { icon: "🛡️", name: "Security Scanner", description: "Scan for secrets & dangerous calls", status: "pending" },
+        { icon: "⚙️", name: "Code Generator", description: "Generate project files", status: "pending" },
+        { icon: "✅", name: "Verifier Agent", description: "Score and decision", status: "pending" },
+      ],
+      null
+    );
+    awaitingSpecConfirmation = false;
+    jobId = null;
+    setArtifacts({ files: {}, agent_spec: {}, verifier_result: {}, attempts: [] });
+    elVerifiedScore.textContent = "--";
+    setRoute(null);
+    elPipelineStatus.textContent = "Idle";
+    toast("Cleared", "info");
+  }
+
+  function initTabs() {
+    $$(".tab").forEach((t) => t.addEventListener("click", () => activateTab(t.dataset.tab)));
+  }
+
+  function initReportSwitcher() {
+    $$(".report-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        reportView = btn.dataset.reportView || "summary";
+        $$(".report-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        if (latestResult) renderReport(latestResult);
+      });
+    });
+  }
+
+  function initApp() {
+    initTabs();
+    initReportSwitcher();
+    updateCounter();
+    elPrompt.addEventListener("input", updateCounter);
+    elPrompt.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); elBtnRun.click(); }
+    });
+
+    elBtnRun.addEventListener("click", () => {
+      if (isRunning) return;
+      const prompt = elPrompt.value.trim();
+      if (!prompt) return;
+      if (prompt.length < 3) { toast("Prompt too short", "error"); return; }
+      start(prompt);
+    });
+
+    elBtnClear.addEventListener("click", clearUI);
+    elBtnConfirmSpec.addEventListener("click", confirmSpecAndGenerate);
+    elBtnTerminate.addEventListener("click", terminateRun);
+
+    elBtnLogout.addEventListener("click", async () => {
+      try {
+        await fetch(`${API}/api/auth/logout`, {
+          method: "POST",
+          headers: authHeaders(),
+        });
+      } catch { /* ok */ }
+      clearToken();
+      showAuth();
+      toast("Logged out", "info");
+    });
+
+    checkServer();
+    loadHistory();
+    clearUI();
+    elBtnTerminate.disabled = true;
+    addMessage("assistant", "Ready. Ask a question or describe the agent you want to build.");
+  }
+
+
+  // ═══════════════════════════════════════════
+  //  BOOT
+  // ═══════════════════════════════════════════
+
+  function boot() {
+    initAuthTabs();
+    initAuthForms();
+    tryAutoLogin();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
 })();

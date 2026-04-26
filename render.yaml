@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: agentforge
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: CONTENT_GUARD_ENABLED
+        value: "false"

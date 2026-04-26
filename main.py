@@ -8,7 +8,6 @@ Runs the full agent-generation pipeline in order:
   Step 2 │ inputextractor.py     │ build_agent_output.json → final_agent.json
   Step 3 │ agentbuild.py         │ final_agent.json  → generated_agent/
   Step 4 │ verifier.py           │ generated_agent/  → verifier_result.json
-  Step 5 │ code_interface_agent.py│ generated_agent/ → output.md
 
 Usage:
     python main.py
@@ -27,6 +26,11 @@ import subprocess
 from pathlib import Path
 from datetime import datetime
 
+from dotenv import load_dotenv
+
+# Load local environment (e.g., GROQ_API_KEY in .env) for subprocess steps.
+load_dotenv()
+
 # ─────────────────────────────────────────────────────────────────────────────
 # PIPELINE CONFIGURATION
 # ─────────────────────────────────────────────────────────────────────────────
@@ -39,14 +43,12 @@ BUILD_AGENT_OUTPUT     = BASE_DIR / "build_agent_output.json"
 FINAL_AGENT_JSON       = BASE_DIR / "final_agent.json"
 GENERATED_AGENT_FOLDER = BASE_DIR / "generated_agent"
 VERIFIER_RESULT        = BASE_DIR / "verifier_result.json"
-OUTPUT_MD              = BASE_DIR / "output.md"
 
 # Agent scripts
 PERSPECTIVE_AGENT      = BASE_DIR / "perspective_agent.py"
 INPUT_EXTRACTOR        = BASE_DIR / "inputextractor.py"
 AGENT_BUILD            = BASE_DIR / "agentbuild.py"
 VERIFIER_AGENT         = BASE_DIR / "verifier.py"
-CODE_INTERFACE_AGENT   = BASE_DIR / "code_interface_agent.py"
 
 PYTHON                 = sys.executable
 
@@ -123,8 +125,7 @@ def save_input_to_csv(user_input: str):
 def validate_scripts():
     """Ensure all agent scripts exist before starting."""
     missing = []
-    for script in [PERSPECTIVE_AGENT, INPUT_EXTRACTOR, AGENT_BUILD,
-                   VERIFIER_AGENT, CODE_INTERFACE_AGENT]:
+    for script in [PERSPECTIVE_AGENT, INPUT_EXTRACTOR, AGENT_BUILD, VERIFIER_AGENT]:
         if not script.exists():
             missing.append(str(script))
     if missing:
@@ -215,7 +216,7 @@ def run_step(
 # ─────────────────────────────────────────────────────────────────────────────
 
 def step1_perspective_agent(user_input: str, skip: bool) -> bool:
-    step_header(1, 5, "Perspective Agent", PERSPECTIVE_AGENT.name)
+    step_header(1, 4, "Perspective Agent", PERSPECTIVE_AGENT.name)
     info(f"User input: \"{user_input[:80]}{'...' if len(user_input) > 80 else ''}\"")
     info(f"Expected output → {BUILD_AGENT_OUTPUT.name}")
 
@@ -242,7 +243,7 @@ def step1_perspective_agent(user_input: str, skip: bool) -> bool:
 
 
 def step2_input_extractor(skip: bool) -> bool:
-    step_header(2, 5, "Input Extractor", INPUT_EXTRACTOR.name)
+    step_header(2, 4, "Input Extractor", INPUT_EXTRACTOR.name)
     info(f"Reading  ← {BUILD_AGENT_OUTPUT.name}")
     info(f"Expected output → {FINAL_AGENT_JSON.name}")
 
@@ -263,7 +264,7 @@ def step3_agent_build(skip: bool) -> bool:
     agentbuild.py reads final_agent.json directly — no CLI args needed.
     Writes output to generated_agent/ folder automatically.
     """
-    step_header(3, 5, "Agent Builder", AGENT_BUILD.name)
+    step_header(3, 4, "Agent Builder", AGENT_BUILD.name)
     info(f"Reading  ← {FINAL_AGENT_JSON.name}")
     info(f"Expected output → {GENERATED_AGENT_FOLDER.name}/")
 
@@ -282,7 +283,7 @@ def step4_verifier_agent(skip: bool) -> bool:
     verifier.py reads generated_agent/ and writes verifier_result.json — no CLI args needed.
     Uses Groq AI review only (no difflib).
     """
-    step_header(4, 5, "Verifier Agent", VERIFIER_AGENT.name)
+    step_header(4, 4, "Verifier Agent", VERIFIER_AGENT.name)
     info(f"Reading  ← {GENERATED_AGENT_FOLDER.name}/")
     info(f"Expected output → {VERIFIER_RESULT.name}")
 
@@ -301,14 +302,15 @@ def step4_verifier_agent(skip: bool) -> bool:
 
 
 def _print_verifier_summary():
-    """Pretty-print key fields from verifier_result.json (Groq AI review format)."""
+    """Pretty-print key fields from verifier_result.json."""
     try:
         data       = json.loads(VERIFIER_RESULT.read_text(encoding="utf-8"))
         status     = data.get("overall_status", "unknown")
-        score      = data.get("overall_correctness_percentage")
-        ai_review  = data.get("ai_review", {})
+        score      = data.get("correctness_score")
+        band       = data.get("correctness_band")
+        ai_review  = (data.get("layer4_llm") or {}).get("details", {})
         issues     = ai_review.get("issues", [])
-        summary    = ai_review.get("summary", "")
+        summary    = ai_review.get("summary", data.get("delivery_notes", ""))
 
         color = GREEN if str(status).upper() == "PASS" else YELLOW
 
@@ -316,6 +318,8 @@ def _print_verifier_summary():
         print(f"  Status  : {color}{status}{RESET}")
         if score is not None:
             print(f"  Score   : {score}%")
+        if band:
+            print(f"  Band    : {band}")
         if summary:
             print(f"  Verdict : {summary}")
         if issues:
@@ -358,23 +362,6 @@ def show_conversational_response():
     except Exception:
         warn("Could not read conversational_output.json")
 
-def step5_code_interface_agent(skip: bool) -> bool:
-    step_header(5, 5, "Code Interface Agent", CODE_INTERFACE_AGENT.name)
-    info(f"Reading  ← {GENERATED_AGENT_FOLDER.name}/")
-    info(f"Expected output → {OUTPUT_MD.name}")
-
-    success = run_step(
-        cmd=[PYTHON, CODE_INTERFACE_AGENT,
-             "--folder", str(GENERATED_AGENT_FOLDER),
-             "--output", str(OUTPUT_MD)],
-        step_name="code_interface_agent",
-        skip_on_failure=skip,
-    )
-    if not success:
-        return False
-    return assert_file_exists(OUTPUT_MD, "output.md", skip)
-
-
 # ─────────────────────────────────────────────────────────────────────────────
 # FINAL SUMMARY
 # ─────────────────────────────────────────────────────────────────────────────
@@ -390,7 +377,6 @@ def print_summary(results: dict, elapsed_total: float):
         ("Step 2 │ Input Extractor",       "final_agent.json"),
         ("Step 3 │ Agent Builder",         "generated_agent/"),
         ("Step 4 │ Verifier Agent",        "verifier_result.json"),
-        ("Step 5 │ Code Interface Agent",  "output.md"),
     ]
     for (label, artifact), passed in zip(rows, results.values()):
         status = icons[passed]
@@ -405,7 +391,7 @@ def print_summary(results: dict, elapsed_total: float):
 
     if overall:
         print(f"\n  {GREEN}All outputs are ready.{RESET}")
-        print(f"  Open {BOLD}output.md{RESET} for the full agent documentation.\n")
+        print(f"  Open {BOLD}generated_agent/README.md{RESET} for run instructions.\n")
     else:
         print(f"\n  {YELLOW}Some steps did not complete — check logs above.{RESET}\n")
 
@@ -441,9 +427,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--start-from",
         type=int,
-        choices=[1, 2, 3, 4, 5],
+        choices=[1, 2, 3, 4],
         default=1,
-        help="Resume pipeline from a specific step (1–5).",
+        help="Resume pipeline from a specific step (1–4).",
     )
 
     return parser.parse_args()
@@ -548,13 +534,6 @@ def main():
         else:
             results["step4"] = True
             info("Skipping Step 4 (--start-from requested).")
-
-        # ── Step 5 ───────────────────────────────────────────────────────────
-        if args.start_from <= 5:
-            results["step5"] = step5_code_interface_agent(skip)
-        else:
-            results["step5"] = True
-            info("Skipping Step 5 (--start-from requested).")
 
         # ── Summary ───────────────────────────────────────────────────────────
         total_elapsed = time.time() - pipeline_start

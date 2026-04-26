@@ -1,438 +1,190 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgentForge — Configuration-Driven Agentic System</title>
-    <meta name="description" content="Build AI agents from natural language prompts. A multi-agent pipeline that classifies, extracts, generates, verifies, and documents your agent code.">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AgentForge — AI Agent Generator</title>
+    <meta name="description" content="Generate production-ready AI agents from natural language" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- ═══════════ AUTH OVERLAY ═══════════ -->
+    <div id="authOverlay" class="auth-overlay">
+      <div class="auth-card">
+        <div class="auth-brand">
+          <div class="auth-logo">A</div>
+          <h1>AgentForge</h1>
+          <p>Generate AI agents from natural language</p>
+        </div>
 
-    <!-- Highlight.js for syntax highlighting -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark-dimmed.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/markdown.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+        <div id="authTabs" class="auth-tabs">
+          <button class="auth-tab active" data-auth-tab="login">Sign In</button>
+          <button class="auth-tab" data-auth-tab="signup">Create Account</button>
+        </div>
 
-    <!-- Marked.js for markdown rendering -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js"></script>
+        <!-- Login Form -->
+        <form id="loginForm" class="auth-form active" data-auth-form="login">
+          <div class="form-group">
+            <label for="loginEmail">Email</label>
+            <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" placeholder="Enter your password" required autocomplete="current-password" />
+          </div>
+          <div id="loginError" class="form-error"></div>
+          <button type="submit" class="btn btn-auth">Sign In</button>
+        </form>
 
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <!-- Animated Background -->
-    <canvas id="bg-canvas"></canvas>
-
-    <!-- App Container -->
-    <div class="app-container">
-
-        <!-- Header -->
-        <header class="app-header" id="app-header">
-            <div class="header-left">
-                <div class="logo">
-                    <div class="logo-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <rect x="2" y="2" width="28" height="28" rx="8" stroke="url(#logo-grad)" stroke-width="2.5"/>
-                            <path d="M10 16L14 20L22 12" stroke="url(#logo-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            <circle cx="16" cy="8" r="2" fill="#00d4ff"/>
-                            <circle cx="8" cy="22" r="1.5" fill="#a855f7"/>
-                            <circle cx="24" cy="22" r="1.5" fill="#22c55e"/>
-                            <defs>
-                                <linearGradient id="logo-grad" x1="0" y1="0" x2="32" y2="32">
-                                    <stop stop-color="#00d4ff"/>
-                                    <stop offset="1" stop-color="#a855f7"/>
-                                </linearGradient>
-                            </defs>
-                        </svg>
-                    </div>
-                    <div class="logo-text">
-                        <h1>AgentForge</h1>
-                        <span class="logo-subtitle">Configuration-Driven Agentic System</span>
-                    </div>
-                </div>
-            </div>
-            <div class="header-right">
-                <button class="btn-icon" id="btn-history" title="Prompt History">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12,6 12,12 16,14"/>
-                    </svg>
-                </button>
-                <div class="status-badge" id="server-status">
-                    <span class="status-dot"></span>
-                    <span>Online</span>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content -->
-        <main class="main-content">
-
-            <!-- Left Panel: Input + Pipeline -->
-            <section class="left-panel">
-
-                <!-- Prompt Input -->
-                <div class="card prompt-card" id="prompt-card">
-                    <div class="card-header">
-                        <span class="card-icon">⚡</span>
-                        <h2>Describe Your Agent</h2>
-                    </div>
-                    <div class="prompt-input-wrapper">
-                        <textarea
-                            id="prompt-input"
-                            placeholder="Build me an AI agent that reads CSV files and extracts named entities..."
-                            rows="4"
-                            maxlength="5000"
-                        ></textarea>
-                        <div class="prompt-footer">
-                            <span class="char-count" id="char-count">0 / 5000</span>
-                            <button class="btn-primary" id="btn-submit" title="Generate Agent">
-                                <span class="btn-text">Generate</span>
-                                <svg class="btn-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M22 2L11 13"/>
-                                    <path d="M22 2L15 22L11 13L2 9L22 2Z"/>
-                                </svg>
-                                <div class="btn-spinner" style="display:none;">
-                                    <div class="spinner-ring"></div>
-                                </div>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="prompt-suggestions" id="prompt-suggestions">
-                        <span class="suggestion-label">Try:</span>
-                        <button class="suggestion-chip" data-prompt="Build me a CSV named entity extractor agent">CSV Extractor</button>
-                        <button class="suggestion-chip" data-prompt="Create an AI agent that summarizes PDF documents into bullet points">PDF Summarizer</button>
-                        <button class="suggestion-chip" data-prompt="Build a web scraping agent that monitors price changes daily">Web Scraper</button>
-                        <button class="suggestion-chip" data-prompt="What is an LLM agent?">Ask: LLM Agents</button>
-                    </div>
-                </div>
-
-                <!-- Pipeline Tracker -->
-                <div class="card pipeline-card" id="pipeline-card">
-                    <div class="card-header">
-                        <span class="card-icon">🔄</span>
-                        <h2>Agent Pipeline</h2>
-                        <span class="pipeline-status-text" id="pipeline-status-text"></span>
-                    </div>
-                    <div class="pipeline-tracker" id="pipeline-tracker">
-                        <div class="pipeline-step" data-step="0" id="step-perspective">
-                            <div class="step-connector"></div>
-                            <div class="step-node">
-                                <div class="step-node-inner">
-                                    <span class="step-icon">🔍</span>
-                                </div>
-                                <div class="step-pulse"></div>
-                            </div>
-                            <div class="step-info">
-                                <span class="step-name">Perspective Agent</span>
-                                <span class="step-desc">Classify input intent</span>
-                            </div>
-                            <div class="step-status-icon"></div>
-                        </div>
-                        <div class="pipeline-step" data-step="1" id="step-extractor">
-                            <div class="step-connector"></div>
-                            <div class="step-node">
-                                <div class="step-node-inner">
-                                    <span class="step-icon">📋</span>
-                                </div>
-                                <div class="step-pulse"></div>
-                            </div>
-                            <div class="step-info">
-                                <span class="step-name">Input Extractor</span>
-                                <span class="step-desc">Extract specifications</span>
-                            </div>
-                            <div class="step-status-icon"></div>
-                        </div>
-                        <div class="pipeline-step" data-step="2" id="step-builder">
-                            <div class="step-connector"></div>
-                            <div class="step-node">
-                                <div class="step-node-inner">
-                                    <span class="step-icon">⚙️</span>
-                                </div>
-                                <div class="step-pulse"></div>
-                            </div>
-                            <div class="step-info">
-                                <span class="step-name">Code Generator</span>
-                                <span class="step-desc">Generate agent code</span>
-                            </div>
-                            <div class="step-status-icon"></div>
-                        </div>
-                        <div class="pipeline-step" data-step="3" id="step-verifier">
-                            <div class="step-connector"></div>
-                            <div class="step-node">
-                                <div class="step-node-inner">
-                                    <span class="step-icon">✅</span>
-                                </div>
-                                <div class="step-pulse"></div>
-                            </div>
-                            <div class="step-info">
-                                <span class="step-name">Verifier Agent</span>
-                                <span class="step-desc">Review correctness</span>
-                            </div>
-                            <div class="step-status-icon"></div>
-                        </div>
-                        <div class="pipeline-step" data-step="4" id="step-interface">
-                            <div class="step-connector"></div>
-                            <div class="step-node">
-                                <div class="step-node-inner">
-                                    <span class="step-icon">📄</span>
-                                </div>
-                                <div class="step-pulse"></div>
-                            </div>
-                            <div class="step-info">
-                                <span class="step-name">Code Interface</span>
-                                <span class="step-desc">Generate report</span>
-                            </div>
-                            <div class="step-status-icon"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Verifier Score -->
-                <div class="card verifier-card hidden" id="verifier-card">
-                    <div class="card-header">
-                        <span class="card-icon">🎯</span>
-                        <h2>Verification Score</h2>
-                    </div>
-                    <div class="verifier-content">
-                        <div class="score-gauge">
-                            <svg viewBox="0 0 120 120" class="gauge-svg">
-                                <circle cx="60" cy="60" r="52" class="gauge-bg"/>
-                                <circle cx="60" cy="60" r="52" class="gauge-fill" id="gauge-fill"
-                                    stroke-dasharray="326.73"
-                                    stroke-dashoffset="326.73"/>
-                            </svg>
-                            <div class="score-value" id="score-value">0%</div>
-                            <div class="score-label" id="score-label">—</div>
-                        </div>
-                        <div class="verifier-details" id="verifier-details"></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Right Panel: Output -->
-            <section class="right-panel" id="right-panel">
-
-                <!-- Welcome State -->
-                <div class="welcome-state" id="welcome-state">
-                    <div class="welcome-illustration">
-                        <div class="welcome-orb orb-1"></div>
-                        <div class="welcome-orb orb-2"></div>
-                        <div class="welcome-orb orb-3"></div>
-                        <svg width="120" height="120" viewBox="0 0 120 120" fill="none" class="welcome-icon">
-                            <rect x="10" y="10" width="100" height="100" rx="24" stroke="url(#wg)" stroke-width="2" opacity="0.3"/>
-                            <path d="M40 60L55 75L80 45" stroke="url(#wg)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
-                            <circle cx="60" cy="30" r="5" fill="#00d4ff" opacity="0.5"/>
-                            <circle cx="30" cy="85" r="4" fill="#a855f7" opacity="0.4"/>
-                            <circle cx="90" cy="85" r="4" fill="#22c55e" opacity="0.4"/>
-                            <defs>
-                                <linearGradient id="wg" x1="10" y1="10" x2="110" y2="110">
-                                    <stop stop-color="#00d4ff"/>
-                                    <stop offset="1" stop-color="#a855f7"/>
-                                </linearGradient>
-                            </defs>
-                        </svg>
-                    </div>
-                    <h2>Ready to Build Your Agent</h2>
-                    <p>Describe what you want to build in natural language. The multi-agent pipeline will classify, extract, generate, verify, and document your code automatically.</p>
-                    <div class="welcome-features">
-                        <div class="feature">
-                            <span class="feature-icon">🧠</span>
-                            <span>Intent Classification</span>
-                        </div>
-                        <div class="feature">
-                            <span class="feature-icon">⚡</span>
-                            <span>AI Code Generation</span>
-                        </div>
-                        <div class="feature">
-                            <span class="feature-icon">🛡️</span>
-                            <span>Auto Verification</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Conversational Response -->
-                <div class="conversational-panel hidden" id="conversational-panel">
-                    <div class="card conv-card">
-                        <div class="card-header">
-                            <span class="card-icon">💬</span>
-                            <h2>Response</h2>
-                            <span class="route-badge conversational">Conversational</span>
-                        </div>
-                        <div class="conv-response" id="conv-response"></div>
-                    </div>
-                </div>
-
-                <!-- Code Output Panel -->
-                <div class="code-output-panel hidden" id="code-output-panel">
-                    <!-- Route Badge -->
-                    <div class="route-indicator">
-                        <span class="route-badge agent-building">Agent Building</span>
-                    </div>
-
-                    <!-- Tab Bar -->
-                    <div class="tab-bar" id="tab-bar">
-                        <button class="tab active" data-tab="report" id="tab-report">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14,2 14,8 20,8"/>
-                                <line x1="16" y1="13" x2="8" y2="13"/>
-                                <line x1="16" y1="17" x2="8" y2="17"/>
-                            </svg>
-                            Report
-                        </button>
-                        <button class="tab" data-tab="agent" id="tab-agent">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="16,18 22,12 16,6"/>
-                                <polyline points="8,6 2,12 8,18"/>
-                            </svg>
-                            agent.py
-                        </button>
-                        <button class="tab" data-tab="main" id="tab-main">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="4,17 10,11 4,5"/>
-                                <line x1="12" y1="19" x2="20" y2="19"/>
-                            </svg>
-                            main.py
-                        </button>
-                        <button class="tab" data-tab="requirements" id="tab-requirements">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                                <path d="M9 8h6"/>
-                                <path d="M9 12h6"/>
-                                <path d="M9 16h4"/>
-                            </svg>
-                            requirements.txt
-                        </button>
-                        <button class="tab" data-tab="readme" id="tab-readme">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-                            </svg>
-                            README.md
-                        </button>
-                        <button class="tab" data-tab="spec" id="tab-spec">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                                <path d="M2 17l10 5 10-5"/>
-                                <path d="M2 12l10 5 10-5"/>
-                            </svg>
-                            Spec JSON
-                        </button>
-                    </div>
-
-                    <!-- Tab Content -->
-                    <div class="tab-content" id="tab-content">
-                        <div class="tab-pane active" data-pane="report" id="pane-report">
-                            <div class="markdown-body" id="report-content">
-                                <div class="loading-skeleton">
-                                    <div class="skeleton-line w80"></div>
-                                    <div class="skeleton-line w60"></div>
-                                    <div class="skeleton-line w90"></div>
-                                    <div class="skeleton-line w40"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="tab-pane" data-pane="agent" id="pane-agent">
-                            <div class="code-header">
-                                <span class="code-filename">agent.py</span>
-                                <button class="btn-copy" data-target="code-agent" title="Copy to clipboard">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="9" y="9" width="13" height="13" rx="2"/>
-                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                                    </svg>
-                                    <span>Copy</span>
-                                </button>
-                            </div>
-                            <pre><code class="language-python" id="code-agent"></code></pre>
-                        </div>
-                        <div class="tab-pane" data-pane="main" id="pane-main">
-                            <div class="code-header">
-                                <span class="code-filename">main.py</span>
-                                <button class="btn-copy" data-target="code-main" title="Copy to clipboard">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="9" y="9" width="13" height="13" rx="2"/>
-                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                                    </svg>
-                                    <span>Copy</span>
-                                </button>
-                            </div>
-                            <pre><code class="language-python" id="code-main"></code></pre>
-                        </div>
-                        <div class="tab-pane" data-pane="requirements" id="pane-requirements">
-                            <div class="code-header">
-                                <span class="code-filename">requirements.txt</span>
-                                <button class="btn-copy" data-target="code-requirements" title="Copy to clipboard">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="9" y="9" width="13" height="13" rx="2"/>
-                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                                    </svg>
-                                    <span>Copy</span>
-                                </button>
-                            </div>
-                            <pre><code class="language-text" id="code-requirements"></code></pre>
-                        </div>
-                        <div class="tab-pane" data-pane="readme" id="pane-readme">
-                            <div class="markdown-body" id="readme-content"></div>
-                        </div>
-                        <div class="tab-pane" data-pane="spec" id="pane-spec">
-                            <div class="code-header">
-                                <span class="code-filename">final_agent.json</span>
-                                <button class="btn-copy" data-target="code-spec" title="Copy to clipboard">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="9" y="9" width="13" height="13" rx="2"/>
-                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                                    </svg>
-                                    <span>Copy</span>
-                                </button>
-                            </div>
-                            <pre><code class="language-json" id="code-spec"></code></pre>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Error State -->
-                <div class="error-panel hidden" id="error-panel">
-                    <div class="card error-card">
-                        <div class="card-header">
-                            <span class="card-icon">⚠️</span>
-                            <h2>Pipeline Error</h2>
-                        </div>
-                        <div class="error-message" id="error-message"></div>
-                        <button class="btn-primary btn-retry" id="btn-retry">
-                            <span>Try Again</span>
-                        </button>
-                    </div>
-                </div>
-            </section>
-        </main>
+        <!-- Signup Form -->
+        <form id="signupForm" class="auth-form" data-auth-form="signup">
+          <div class="form-group">
+            <label for="signupUsername">Username</label>
+            <input type="text" id="signupUsername" placeholder="Choose a username" required minlength="3" maxlength="30" autocomplete="username" />
+          </div>
+          <div class="form-group">
+            <label for="signupEmail">Email</label>
+            <input type="email" id="signupEmail" placeholder="you@example.com" required autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <label for="signupPassword">Password</label>
+            <input type="password" id="signupPassword" placeholder="Min 6 characters" required minlength="6" autocomplete="new-password" />
+          </div>
+          <div id="signupError" class="form-error"></div>
+          <button type="submit" class="btn btn-auth">Create Account</button>
+        </form>
+      </div>
     </div>
 
-    <!-- History Sidebar -->
-    <div class="sidebar-overlay hidden" id="sidebar-overlay"></div>
-    <aside class="history-sidebar hidden" id="history-sidebar">
-        <div class="sidebar-header">
-            <h3>Prompt History</h3>
-            <button class="btn-icon" id="btn-close-history">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"/>
-                    <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-            </button>
+    <!-- ═══════════ MAIN APP ═══════════ -->
+    <div id="appShell" class="app hidden">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="logo">A</div>
+          <div class="brand-text">
+            <div class="brand-title">AgentForge</div>
+            <div class="brand-subtitle">Pipeline UI</div>
+          </div>
         </div>
-        <div class="sidebar-body" id="history-list">
-            <div class="history-empty">No prompts yet</div>
-        </div>
-    </aside>
 
-    <!-- Toast Notifications -->
-    <div class="toast-container" id="toast-container"></div>
+        <div class="sidebar-section">
+          <div class="section-title">History</div>
+          <div id="history" class="history"></div>
+        </div>
+
+        <div class="sidebar-section compact">
+          <div class="section-title">Result Report</div>
+          <div class="report-switcher">
+            <button class="report-btn active" data-report-view="summary">Summary</button>
+            <button class="report-btn" data-report-view="verifier">Verifier JSON</button>
+            <button class="report-btn" data-report-view="attempts">Attempts</button>
+          </div>
+          <div class="score-box">
+            <div class="score-label">Verified Score</div>
+            <div id="verifiedScore" class="score-value">--</div>
+          </div>
+        </div>
+
+        <div class="sidebar-footer">
+          <div class="user-info" id="userInfo">
+            <span class="user-avatar" id="userAvatar">?</span>
+            <span class="user-name" id="userName">User</span>
+            <button id="btnLogout" class="btn btn-ghost btn-sm">Logout</button>
+          </div>
+          <div id="serverStatus" class="status-pill">
+            <span class="dot"></span>
+            <span class="label">Server</span>
+            <span class="value">…</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="topbar-left">
+            <div class="title">Agent Pipeline</div>
+            <div class="subtitle">Describe your agent or ask a question</div>
+          </div>
+          <div class="topbar-right">
+            <button id="btnClear" class="btn btn-ghost">Clear</button>
+          </div>
+        </header>
+
+        <section class="content">
+          <div class="panel panel-chat">
+            <div class="panel-header">
+              <div class="panel-title">Conversation</div>
+              <div class="panel-meta" id="routeBadge"></div>
+            </div>
+
+            <div id="chat" class="chat"></div>
+
+            <div class="composer">
+              <textarea
+                id="prompt"
+                rows="3"
+                placeholder="Ask a question, or say: Build me an agent that…"
+                maxlength="5000"
+              ></textarea>
+              <div class="composer-bar">
+                <div class="counter" id="counter">0 / 5000</div>
+                <button id="btnTerminate" class="btn btn-danger">Terminate</button>
+                <button id="btnRun" class="btn btn-primary">Run</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-right">
+            <div class="panel-header">
+              <div class="panel-title">Pipeline</div>
+              <div class="panel-meta" id="pipelineStatus">Idle</div>
+            </div>
+
+            <div id="pipeline" class="pipeline"></div>
+
+            <div class="divider"></div>
+
+            <div class="panel-header">
+              <div class="panel-title">Artifacts</div>
+              <div class="panel-meta">Preview</div>
+            </div>
+
+            <div class="tabs">
+              <button class="tab active" data-tab="report">Report</button>
+              <button class="tab" data-tab="agent">agent.py</button>
+              <button class="tab" data-tab="main">main.py</button>
+              <button class="tab" data-tab="requirements">requirements.txt</button>
+              <button class="tab" data-tab="readme">README.md</button>
+              <button class="tab" data-tab="spec">Spec JSON</button>
+            </div>
+
+            <div class="tabpanes">
+              <div class="pane active" data-pane="report"><pre id="outReport"></pre></div>
+              <div class="pane" data-pane="agent"><pre id="outAgent"></pre></div>
+              <div class="pane" data-pane="main"><pre id="outMain"></pre></div>
+              <div class="pane" data-pane="requirements"><pre id="outReq"></pre></div>
+              <div class="pane" data-pane="readme"><pre id="outReadme"></pre></div>
+              <div class="pane" data-pane="spec">
+                <div class="spec-toolbar">
+                  <button id="btnConfirmSpec" class="btn btn-primary">Confirm JSON & Generate</button>
+                </div>
+                <textarea id="outSpec" rows="20" spellcheck="false" placeholder="Agent specification JSON" title="Editable agent specification JSON"></textarea>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div id="toastHost" class="toasts"></div>
+      </main>
+    </div>
 
     <script src="app.js"></script>
-</body>
+  </body>
 </html>

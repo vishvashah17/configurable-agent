@@ -1,68 +1,61 @@
-# advanced_extractor_agent.py
+"""
+inputextractor.py — Advanced Agent Specification Extractor
+===========================================================
+Changes from original:
+ - language_selection is now wired into extract() and used in build_simple_agent_json()
+ - Language from language_selection takes priority over technical_requirements
+   when the user hasn't explicitly stated a language there
+ - Null/empty values are filtered before applying defaults (no more empty-string overrides)
+ - confirm_and_edit() supports typed values (list/bool) via JSON parsing
+ - Minor: removed duplicate IMPORTANT EXTRACTION RULES block from integration_needs prompt
+"""
+
 import csv
 import json
 import os
 import re
-import asyncio
 import sys
-from typing import Dict, Any, List, Optional
-from datetime import datetime
-from enum import Enum
-from langgraph.graph import StateGraph, END
+from typing import Any, Dict
 
-# Ollama import fix
-try:
-    from langchain_ollama import OllamaLLM as Ollama
-    print("Using updated Ollama import")
-except ImportError:
-    from langchain_community.llms import Ollama
-    print("Using legacy Ollama import")
+from groq_utils import DEFAULT_GROQ_MODEL, groq_chat_json
 
 
 # ===================== DEFAULTS =====================
 
 DEFAULTS = {
-    "agent_name": "AutoAgent",
-    "primary_purpose": "General assistant",
-    "capabilities": [],
-    "target_users": "general users",
-    "domain": "general",
-    "content_types": ["text"],
-    "decision_authority": "assist only",
+    "agent_name":          "AutoAgent",
+    "primary_purpose":     "General assistant",
+    "capabilities":        [],
+    "target_users":        "general users",
+    "domain":              "general",
+    "content_types":       ["text"],
+    "decision_authority":  "assist only",
 
-    "language": "Python",
-    "framework": "None",
-    "api_integrations": [],
-    "database": "json_file",
-    "cloud_platform": "local",
-    "performance": "normal",
-    "security": "basic",
-    "storage": "json_file",
-    "memory": "in_memory",
-    "third_party_tools": [],
+    "language":            "Python",
+    "framework":           "None",
+    "api_integrations":    [],
+    "database":            "json_file",
+    "cloud_platform":      "local",
+    "performance":         "normal",
+    "security":            "basic",
+    "storage":             "json_file",
+    "memory":              "in_memory",
+    "third_party_tools":   [],
 
-    "tone": "neutral",
-    "personality": ["helpful"],
+    "tone":                "neutral",
+    "personality":         ["helpful"],
     "emotional_intelligence": "medium",
 
-    "external_apis": [],
-    "internal_systems": [],
-    "database_connections": [],
+    "external_apis":           [],
+    "internal_systems":        [],
+    "database_connections":    [],
 }
-
-
-# ===================== CATEGORIES =====================
-
-class ExtractionCategory(str, Enum):
-    CORE_SPEC = "core_specifications"
-    TECH_REQ = "technical_requirements"
-    BEHAVIORAL = "behavioral_traits"
-    INTEGRATION = "integration_needs"
 
 
 # ===================== PROMPTS =====================
 
 EXTRACTION_PROMPTS = {
+
     "core_specifications": """
 Extract:
 - Agent Name
@@ -94,26 +87,26 @@ Rules:
 User Input:
 {input_text}
 """,
-"language_selection": """
+
+    "language_selection": """
 You are an expert AI systems engineer.
 
-Based ONLY on the user’s requested agent functionality, determine the most appropriate programming language to build this agent.check if user has already mentioned a programming language or you figure out the best one.
-
+Based ONLY on the user's requested agent functionality, determine the most appropriate
+programming language to build this agent.
 
 Rules:
-- Choose a language commonly used for this type of AI agent
-- Prefer ecosystem strength (LLMs, APIs, tooling)
-- Do NOT choose frameworks as languages
-- Return ONE language only
-- If the user explicitly mentions a language, use that
-- Otherwise intelligently select the best option
+- If the user explicitly mentions a language, use exactly that
+- Otherwise, choose the best language for this type of agent (prefer Python for AI/LLM agents)
+- Do NOT choose a framework as a language (e.g. "LangChain" is not a language)
+- Return ONE language name only
+- Keep the reason concise (max 15 words)
 
-Return ONLY JSON in this format:
-
-{
+Return ONLY JSON in this exact format:
+{{
   "language": "chosen_language",
-  "reason": "short technical justification"
-}
+  "reason": "short technical justification",
+  "user_specified": true_or_false
+}}
 
 User Input:
 {input_text}
@@ -147,7 +140,6 @@ You MUST return ONLY this JSON object:
   "Tools": []
 }}
 
-
 Rules:
 - Use values from user input only
 - If not mentioned, keep null or empty list
@@ -166,13 +158,12 @@ Extract:
 
 Never create new information that is not explicitly present in the user input.
 
-
 You MUST return ONLY this JSON object:
 
 {{
   "Tone": null,
   "Personality": [],
-  "Emotional intelligence": null,
+  "Emotional intelligence": null
 }}
 
 Rules:
@@ -180,9 +171,6 @@ Rules:
 - If not mentioned, keep null or empty list
 - Do NOT explain
 - Do NOT add text outside JSON
-
-Never create new information that is not explicitly present in the user input.
-
 
 User Input:
 {input_text}
@@ -201,7 +189,7 @@ You MUST return ONLY this JSON object:
 {{
   "External APIs": [],
   "Internal systems": [],
-  "Database connections": [],
+  "Database connections": []
 }}
 
 Rules:
@@ -209,161 +197,252 @@ Rules:
 - If not mentioned, keep empty list
 - Do NOT explain
 - Do NOT add text outside JSON
-
-Never create new information that is not explicitly present in the user input.
-
+- Only extract what is explicitly stated — do not infer or assume
 
 User Input:
 {input_text}
-
-IMPORTANT EXTRACTION RULES:
-
-• Only extract information that is explicitly stated in the user input
-• Do NOT infer, guess, assume, or generalize
-• If a value is not clearly mentioned, return null or an empty list
-• Do NOT map tools into behavior fields
-• Do NOT convert frameworks into programming languages
-• Do NOT fill every field just to complete JSON
-• Accuracy is more important than completeness
-
-Output must strictly follow the JSON template.
-"""
+""",
 }
+
 
 # ===================== EXTRACTOR =====================
 
 class AdvancedAgentExtractor:
 
-    def __init__(self, model_name="mistral:7b"):
-        self.model = Ollama(model=model_name)
-        self.graph = self._create_graph()
+    def __init__(self, model_name: str = DEFAULT_GROQ_MODEL):
+        self.model_name = model_name
 
-    def _create_graph(self):
-        workflow = StateGraph(dict)
+    def _extract_category(self, input_text: str, category: str) -> dict:
+        prompt = EXTRACTION_PROMPTS[category].format(input_text=input_text)
+        last = {}
+        for _ in range(3):
+            try:
+                last = groq_chat_json(
+                    system=(
+                        "You MUST return ONLY the JSON object described in the prompt. "
+                        "No markdown, no commentary, no extra keys."
+                    ),
+                    user=prompt,
+                    model=self.model_name,
+                    temperature=0.0,
+                    max_tokens=900,
+                ) or {}
+                if isinstance(last, dict):
+                    return last
+            except Exception:
+                continue
+        return last if isinstance(last, dict) else {}
 
-        for cat in ExtractionCategory:
-            workflow.add_node(cat.value, self._make_node(cat.value))
+    def extract(self, user_input: str) -> Dict[str, Any]:
+        state: Dict[str, Any] = {"input_text": user_input}
 
-        workflow.add_edge("__start__", ExtractionCategory.CORE_SPEC.value)
+        print("  Extracting core specifications ...")
+        state["core_specifications"]   = self._extract_category(user_input, "core_specifications")
 
-        cats = [c.value for c in ExtractionCategory]
-        for i in range(len(cats) - 1):
-            workflow.add_edge(cats[i], cats[i + 1])
+        # Language selection is now a dedicated, reliable call
+        print("  Selecting programming language ...")
+        state["language_selection"]    = self._extract_category(user_input, "language_selection")
 
-        workflow.add_edge(cats[-1], END)
-        return workflow.compile()
+        print("  Extracting technical requirements ...")
+        state["technical_requirements"] = self._extract_category(user_input, "technical_requirements")
 
-    def _make_node(self, category):
-        async def node(state):
-            return await self._extract_node(state, category)
-        return node
+        print("  Extracting behavioral traits ...")
+        state["behavioral_traits"]     = self._extract_category(user_input, "behavioral_traits")
 
-    async def _extract_node(self, state, category):
-        if "input_text" not in state:
-            return state
+        print("  Extracting integration needs ...")
+        state["integration_needs"]     = self._extract_category(user_input, "integration_needs")
 
-        prompt = EXTRACTION_PROMPTS[category].format(
-            input_text=state["input_text"]
-        )
-
-        response = await self.model.ainvoke(prompt)
-
-        parsed = self._parse_json(response)
-
-        state[category] = parsed or {}
         return state
 
-    def _parse_json(self, text):
-        try:
-            return json.loads(text.strip())
-        except:
-            match = re.search(r"\{.*\}", text, re.S)
-            if match:
-                try:
-                    return json.loads(match.group())
-                except:
-                    pass
-        return None
 
-    def extract(self, user_input):
-        return asyncio.run(
-            self.graph.ainvoke({"input_text": user_input})
-        )
+# ===================== VALUE HELPERS =====================
+
+def _is_empty(value: Any) -> bool:
+    """Returns True if a value should be treated as 'not provided'."""
+    if value is None:
+        return True
+    if isinstance(value, str) and value.strip().lower() in ("", "none", "n/a", "null"):
+        return True
+    if isinstance(value, list) and len(value) == 0:
+        return True
+    return False
+
+
+def _clean_list(values: Any) -> list:
+    if not isinstance(values, list):
+        return []
+    out = []
+    seen = set()
+    for item in values:
+        s = str(item).strip()
+        if not s or s.lower() in ("none", "null", "n/a"):
+            continue
+        key = s.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(s)
+    return out
+
+
+def _resolve_language(tech: dict, lang_sel: dict) -> str:
+    """
+    Language resolution priority:
+      1. Explicit language in technical_requirements (user typed it there)
+      2. language_selection result (intelligent LLM pick)
+      3. Default: Python
+    """
+    tech_lang = tech.get("Programming language")
+    if not _is_empty(tech_lang):
+        return tech_lang  # User explicitly stated it in tech requirements
+
+    sel_lang = lang_sel.get("language")
+    if not _is_empty(sel_lang):
+        return sel_lang   # LLM-selected best language
+
+    return DEFAULTS["language"]
 
 
 # ===================== CLEAN JSON BUILDER =====================
 
-def build_simple_agent_json(state):
+def build_simple_agent_json(state: Dict[str, Any]) -> dict:
 
-    core = state.get("core_specifications", {})
-    tech = state.get("technical_requirements", {})
-    beh = state.get("behavioral_traits", {})
-    integ = state.get("integration_needs", {})
+    core    = state.get("core_specifications",   {})
+    tech    = state.get("technical_requirements", {})
+    beh     = state.get("behavioral_traits",     {})
+    integ   = state.get("integration_needs",     {})
+    lang_sel = state.get("language_selection",   {})
+
+    # Resolved language (priority: tech_req > language_selection > default)
+    resolved_language = _resolve_language(tech, lang_sel)
+
+    # Attach language selection reasoning for transparency
+    language_note = lang_sel.get("reason", "")
+    user_specified = lang_sel.get("user_specified", False)
 
     agent = {
-        "user input": state.get("input_text", ""),
-        "agent_name": core.get("Agent Name"),
-        "primary_purpose": core.get("Primary Purpose"),
-        "capabilities": core.get("Capabilities"),
-        "target_users": core.get("Target Users"),
-        "domain": core.get("Domain"),
-        "content_types": core.get("Content Types"),
+        "user_input":         state.get("input_text", ""),
+
+        # Core
+        "agent_name":         core.get("Agent Name"),
+        "primary_purpose":    core.get("Primary Purpose"),
+        "capabilities":       core.get("Capabilities"),
+        "target_users":       core.get("Target Users"),
+        "domain":             core.get("Domain"),
+        "content_types":      core.get("Content Types"),
         "decision_authority": core.get("Decision Authority"),
 
-        "language": tech.get("Programming language"),
-        "framework": tech.get("Framework"),
-        "api_integrations": tech.get("APIs"),
-        "database": tech.get("Database"),
-        "cloud_platform": tech.get("Cloud platform"),
-        "performance": tech.get("Performance"),
-        "security": tech.get("Security"),
-        "storage": tech.get("Storage"),
-        "memory": tech.get("Memory"),
-        "third_party_tools": tech.get("Tools"),
+        # Technical
+        "language":           resolved_language,
+        "language_reason":    language_note,
+        "language_user_specified": user_specified,
+        "framework":          tech.get("Framework"),
+        "api_integrations":   tech.get("APIs"),
+        "database":           tech.get("Database"),
+        "cloud_platform":     tech.get("Cloud platform"),
+        "performance":        tech.get("Performance"),
+        "security":           tech.get("Security"),
+        "storage":            tech.get("Storage"),
+        "memory":             tech.get("Memory"),
+        "third_party_tools":  tech.get("Tools"),
 
-        "tone": beh.get("Tone"),
-        "personality": beh.get("Personality"),
+        # Behavioral
+        "tone":               beh.get("Tone"),
+        "personality":        beh.get("Personality"),
         "emotional_intelligence": beh.get("Emotional intelligence"),
-        "response_length": beh.get("Response length"),
 
-        "external_apis": integ.get("External APIs"),
-        "internal_systems": integ.get("Internal systems"),
-        "database_connections": integ.get("Database connections"),
-        "messaging_systems": integ.get("Messaging systems")
+        # Integration
+        "external_apis":         integ.get("External APIs"),
+        "internal_systems":      integ.get("Internal systems"),
+        "database_connections":  integ.get("Database connections"),
     }
 
-    for k, v in DEFAULTS.items():
-        if not agent.get(k):
-            agent[k] = v
+    # Apply defaults only for fields that are truly empty
+    # (prevents overwriting valid values like "None" framework with the default)
+    for key, default_val in DEFAULTS.items():
+        if _is_empty(agent.get(key)):
+            agent[key] = default_val
+
+    # Normalize list/string quality for downstream generator.
+    list_fields = [
+        "capabilities", "content_types", "api_integrations", "third_party_tools",
+        "personality", "external_apis", "internal_systems", "database_connections",
+    ]
+    for field in list_fields:
+        agent[field] = _clean_list(agent.get(field))
+
+    for field in ["agent_name", "primary_purpose", "target_users", "domain", "language", "framework"]:
+        if field in agent and isinstance(agent[field], str):
+            agent[field] = " ".join(agent[field].strip().split())
+
+    if not agent["capabilities"]:
+        # Never output empty capabilities; this hurts code generation quality.
+        purpose = agent.get("primary_purpose", "").strip()
+        agent["capabilities"] = [purpose if purpose else "Perform the primary task reliably"]
+
+    # Remove internal helper keys from final JSON if not needed
+    # (comment out these lines if you want to keep them for transparency)
+    # agent.pop("language_reason", None)
+    # agent.pop("language_user_specified", None)
 
     return agent
 
 
 # ===================== CONFIRM LOOP =====================
 
-def confirm_and_edit(agent_json):
-
+def confirm_and_edit(agent_json: dict) -> dict:
+    """
+    Interactive confirmation loop.
+    Supports typed values: entering a JSON-parseable value updates the field correctly.
+    Example:  capabilities=["scrape", "summarize", "email"]
+    """
     while True:
-        print("\nGenerated Agent JSON:\n")
+        print("\n── Generated Agent JSON ──────────────────────────")
         print(json.dumps(agent_json, indent=2))
+        print("──────────────────────────────────────────────────")
 
-        choice = input("\nProceed? (yes/edit): ").lower()
+        choice = input("\nProceed? (yes / edit / show-language): ").strip().lower() or "yes"
 
         if choice == "yes":
             return agent_json
 
+        if choice == "show-language":
+            print(f"\n  Language : {agent_json.get('language')}")
+            print(f"  Reason   : {agent_json.get('language_reason', 'N/A')}")
+            print(f"  User specified: {agent_json.get('language_user_specified', False)}")
+            continue
+
         if choice == "edit":
-            change = input("field=value : ")
+            change = input("Enter field=value  (e.g.  language=JavaScript) : ").strip()
             if "=" in change:
-                k, v = change.split("=", 1)
-                agent_json[k.strip()] = v.strip()
+                key, raw_val = change.split("=", 1)
+                key = key.strip()
+                raw_val = raw_val.strip()
+
+                # Try to parse as JSON (handles lists, booleans, numbers)
+                try:
+                    value = json.loads(raw_val)
+                except json.JSONDecodeError:
+                    value = raw_val  # Keep as plain string
+
+                if key in agent_json:
+                    agent_json[key] = value
+                    # Keep normalized even after edits.
+                    if key in ("capabilities", "content_types", "api_integrations", "third_party_tools",
+                               "personality", "external_apis", "internal_systems", "database_connections"):
+                        agent_json[key] = _clean_list(agent_json[key])
+                    print(f"  ✓ Updated '{key}' → {value}")
+                else:
+                    print(f"  ⚠ Field '{key}' not found. Available fields:")
+                    print("   ", list(agent_json.keys()))
+            else:
+                print("  ⚠ Invalid format. Use:  field=value")
 
 
 # ===================== MAIN =====================
 
 if __name__ == "__main__":
-
-    csv_path = "input.csv"
+    csv_path = os.getenv("INPUT_CSV_PATH", "input.csv")
     if not os.path.exists(csv_path):
         print(f"⚠  {csv_path} not found.")
         sys.exit(1)
@@ -376,17 +455,18 @@ if __name__ == "__main__":
         sys.exit(1)
 
     user_input = rows[-1]["user_input"]   # always uses the latest entry
-    print(f"Read input from {csv_path}: \"{user_input[:80]}{'...' if len(user_input) > 80 else ''}\"")
+    preview    = user_input[:80] + ("..." if len(user_input) > 80 else "")
+    print(f'\nRead input from {csv_path}: "{preview}"')
 
     extractor = AdvancedAgentExtractor()
-    state = extractor.extract(user_input)
+    state     = extractor.extract(user_input)
 
-    agent_json = build_simple_agent_json(state)
-
+    agent_json  = build_simple_agent_json(state)
     final_agent = confirm_and_edit(agent_json)
 
-    with open("final_agent.json", "w") as f:
+    output_path = os.getenv("FINAL_AGENT_JSON_PATH", "final_agent.json")
+    with open(output_path, "w", encoding="utf-8") as f:
         json.dump(final_agent, f, indent=2)
 
-    print("\nSaved as final_agent.json")
-    print("Agent ready!")
+    print(f"\n✓ Saved as {output_path}")
+    print("  Agent ready!")
