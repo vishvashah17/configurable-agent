@@ -95,9 +95,8 @@ CORS(app, resources={
         "origins": [
             "http://localhost:5000",
             "http://127.0.0.1:5000",
-            "https://*.vercel.app",   # All Vercel preview deployments
-            # Add your custom domain here if you have one:
-            # "https://yourdomain.com",
+            "https://*.vercel.app",
+            "https://responsible-ai-newww.vercel.app",
         ],
         "supports_credentials": True,
         "allow_headers": ["Content-Type", "Authorization"],
