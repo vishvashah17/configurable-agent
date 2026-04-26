@@ -1,7 +1,17 @@
 (() => {
   "use strict";
 
-  const API = window.location.origin;
+  // Backend API base URL — auto-detected:
+  //   • Local dev (localhost)  → same origin (Flask serves everything)
+  //   • Production (Vercel)    → reads from <meta name="api-base"> or <body data-api>
+  //   • Fallback               → relative path (same origin)
+  const _meta = document.querySelector('meta[name="api-base"]');
+  const _dataApi = document.body?.dataset?.api;
+  const API = _meta?.content
+    || _dataApi
+    || (location.hostname === "localhost" || location.hostname === "127.0.0.1"
+        ? window.location.origin
+        : window.__AGENTFORGE_API || window.location.origin);
   const POLL_MS = 1200;
   const TOKEN_KEY = "agentforge_token";
   const USER_KEY = "agentforge_user";

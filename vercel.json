@@ -1,15 +1,20 @@
 {
   "version": 2,
-  "builds": [
+  "buildCommand": null,
+  "outputDirectory": "frontend",
+  "rewrites": [
     {
-      "src": "server.py",
-      "use": "@vercel/python"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
-  "routes": [
+  "headers": [
     {
-      "src": "/(.*)",
-      "dest": "server.py"
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" }
+      ]
     }
   ]
 }

@@ -87,7 +87,23 @@ INPUT_CSV = BASE_DIR / "input.csv"
 
 
 app = Flask(__name__, static_folder=str(FRONTEND_DIR))
-CORS(app)
+
+# CORS — Allow cross-origin requests from Vercel frontend + localhost for dev
+# Update the origins list with your actual Vercel deployment URL
+CORS(app, resources={
+    r"/api/*": {
+        "origins": [
+            "http://localhost:5000",
+            "http://127.0.0.1:5000",
+            "https://*.vercel.app",   # All Vercel preview deployments
+            # Add your custom domain here if you have one:
+            # "https://yourdomain.com",
+        ],
+        "supports_credentials": True,
+        "allow_headers": ["Content-Type", "Authorization"],
+        "methods": ["GET", "POST", "OPTIONS"],
+    }
+})
 
 jobs: dict = {}
 CONTENT_GUARD_ENABLED = os.getenv("CONTENT_GUARD_ENABLED", "false").strip().lower() == "true"
@@ -980,22 +996,38 @@ def _session_cleanup_loop():
 
 
 # ─────────────────────────────────────────────
-#  MAIN
+#  BACKGROUND CLEANUP — Start at module level
+#  (gunicorn imports the module and uses `app` directly,
+#   it never runs __main__, so these must start here)
 # ─────────────────────────────────────────────
 
-if __name__ == "__main__":
-    # Start background cleanup daemons
+_cleanup_started = False
+
+def _start_cleanup_threads():
+    global _cleanup_started
+    if _cleanup_started:
+        return
+    _cleanup_started = True
     threading.Thread(target=_job_cleanup_loop, daemon=True).start()
     threading.Thread(target=_session_cleanup_loop, daemon=True).start()
 
+_start_cleanup_threads()
+
+
+# ─────────────────────────────────────────────
+#  MAIN (local development only)
+# ─────────────────────────────────────────────
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
     print("\n" + "=" * 60)
     print("  >> AgentForge Server (with Guardrails)")
     print("=" * 60)
     print(f"  Frontend : {FRONTEND_DIR}")
     print(f"  Backend  : {BASE_DIR}")
     print(f"  Database : {auth.DB_PATH}")
-    print(f"  URL      : http://localhost:5000")
-    print("  ─────────────────────────────────────")
+    print(f"  URL      : http://localhost:{port}")
+    print("  " + "-" * 37)
     print("  Guardrails Active:")
     print("    G1  Input Validation + Injection Detection")
     print("    G2  Rate Limiting (5/hr pipeline, 10/5m auth)")
@@ -1005,4 +1037,4 @@ if __name__ == "__main__":
     print("    G6  Execution Limits + Auto-Expiry")
     print("    G7  Structured JSON Logging")
     print("=" * 60 + "\n")
-    app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
+    app.run(host="0.0.0.0", port=port, debug=True, use_reloader=False)

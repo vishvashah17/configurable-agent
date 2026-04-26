@@ -78,7 +78,10 @@ def init_db():
     try:
         conn.execute("SELECT last_used FROM sessions LIMIT 1")
     except sqlite3.OperationalError:
-        conn.execute("ALTER TABLE sessions ADD COLUMN last_used TEXT NOT NULL DEFAULT (datetime('now'))")
+        # SQLite cannot ALTER TABLE with non-constant defaults; use empty string
+        conn.execute("ALTER TABLE sessions ADD COLUMN last_used TEXT NOT NULL DEFAULT ''")
+        # Backfill existing rows with current time
+        conn.execute("UPDATE sessions SET last_used = datetime('now') WHERE last_used = ''")
         conn.commit()
 
     conn.close()
