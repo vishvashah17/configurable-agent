@@ -1,24 +1,26 @@
 import asyncio
 import argparse
 import logging
-from agent import Customerinsightsagent
+from agent import Autoagent
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Customer Insights Agent')
+    parser = argparse.ArgumentParser(description='Product Details Extractor')
+    parser.add_argument('-o', '--output', help='Output CSV file', required=True)
     return parser.parse_args()
 
 async def main():
     try:
-        agent = Customerinsightsagent()
-        await agent.run()
+        args = parse_args()
+        agent = Autoagent()
+        await agent.extract_and_save(args.output)
     except KeyboardInterrupt:
-        logger.info('Shutdown requested')
+        logging.info('Shutdown requested')
     except Exception as e:
-        logger.error(f'Error: {e}')
+        logging.error(f'Error: {e}')
+    finally:
+        logging.info('Exiting')
 
 if __name__ == '__main__':
-    args = parse_args()
     asyncio.run(main())

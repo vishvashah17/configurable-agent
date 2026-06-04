@@ -1,9 +1,9 @@
 {
-  "route": "code_interface",
-  "classification": "conversational",
-  "user_text": "what is the meaning of code",
-  "conversational_response": "The term \"code\" refers to a set of instructions or symbols used to represent information or commands in a way that can be understood by computers or other machines. In the context of software engineering, code typically refers to the written text of a computer program, consisting of statements, functions, and variables that are used to create software applications.\n\n---\n\ud83d\udca1 Agent Opportunity: You could build an agent that assists with code completion, suggesting relevant lines of code based on the context of the project, or an agent that reviews code for errors and provides feedback for improvement. \n\n---\n\u2705 Next step: If you want me to build an agent, reply with an agent-generation prompt like:\n\"Build me an agent that ...\"",
+  "route": "clarification",
+  "classification": "needs_clarification",
+  "user_text": "fuck you code",
+  "conversational_response": "I'm here to help, but I need a bit more information to get started. Can you tell me what kind of project or solution you're trying to create with code?",
   "confidence": "high",
-  "reason": "The user is asking a general question about the meaning of code, indicating a request for information rather than a build or creation task.",
-  "original_input": "what is the meaning of code"
+  "reason": "The input is too vague and contains profanity, lacking any clear intent or directive.",
+  "original_input": "fuck you code"
 }

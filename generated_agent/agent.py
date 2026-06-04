@@ -1,113 +1,104 @@
+import logging
+import requests
+from bs4 import BeautifulSoup
 import csv
 import json
-import logging
 
-# Set up logging configuration
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Module-level constants/variables
+LOG_FILE = 'autoagent.log'
+CSV_FILE = 'product_details.csv'
+JSON_FILE = 'product_details.json'
 
-class Customerinsightsagent:
-    def __init__(self, csv_file_path: str, json_file_path: str):
+class Autoagent:
+    def __init__(self, url: str, csv_file: str = CSV_FILE, json_file: str = JSON_FILE):
         """
-        Initialize the Customerinsightsagent class.
+        Initialize the Autoagent instance.
 
         Args:
-        - csv_file_path (str): The path to the CSV file.
-        - json_file_path (str): The path to the JSON file.
+        - url (str): The URL of the online store to scrape.
+        - csv_file (str): The file path to save the scraped product details in CSV format. Defaults to 'product_details.csv'.
+        - json_file (str): The file path to save the scraped product details in JSON format. Defaults to 'product_details.json'.
         """
-        self.csv_file_path = csv_file_path
-        self.json_file_path = json_file_path
-        self.customer_data = []
-        self.total_purchases = 0
-        self.average_order_value = 0
-        self.most_frequent_buyers = {}
+        self.url = url
+        self.csv_file = csv_file
+        self.json_file = json_file
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        handler = logging.FileHandler(LOG_FILE)
+        handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+        self.logger.addHandler(handler)
 
-    def read_csv_file(self) -> list:
+    def web_scraping(self) -> None:
         """
-        Read the CSV file and extract customer data.
-
-        Returns:
-        - list: A list of dictionaries containing customer data.
-        """
-        try:
-            with open(self.csv_file_path, 'r') as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    self.customer_data.append(row)
-            return self.customer_data
-        except FileNotFoundError:
-            logging.error(f"File {self.csv_file_path} not found.")
-            return []
-        except csv.Error as e:
-            logging.error(f"Error reading CSV file: {e}")
-            return []
-
-    def extract_total_purchases(self) -> int:
-        """
-        Extract the total purchases from the customer data.
+        Extract product details from the online store using web scraping.
 
         Returns:
-        - int: The total number of purchases.
+        - None
         """
         try:
-            self.total_purchases = sum(int(row['purchase_amount']) for row in self.customer_data)
-            return self.total_purchases
-        except KeyError:
-            logging.error("Invalid CSV file format. 'purchase_amount' column not found.")
-            return 0
+            resp = requests.get(self.url)
+            soup = BeautifulSoup(resp.content, 'html.parser')
+            product_details = []
+            for product in soup.find_all('div', class_='product'):
+                name = product.find('h2', class_='product-name').text.strip()
+                price = product.find('span', class_='product-price').text.strip()
+                product_details.append({'name': name, 'price': price})
+            self.logger.info('Scraped product details: %s', product_details)
+            self.save_to_csv(product_details)
+            self.save_to_json(product_details)
+        except requests.exceptions.RequestException as e:
+            self.logger.error('Error scraping product details: %s', e)
+        except Exception as e:
+            self.logger.error('Error processing product details: %s', e)
 
-    def extract_average_order_value(self) -> float:
+    def save_to_csv(self, product_details: list) -> None:
         """
-        Extract the average order value from the customer data.
+        Save the scraped product details to a CSV file.
+
+        Args:
+        - product_details (list): A list of dictionaries containing the product details.
 
         Returns:
-        - float: The average order value.
+        - None
         """
         try:
-            if self.total_purchases == 0:
-                return 0
-            self.average_order_value = self.total_purchases / len(self.customer_data)
-            return self.average_order_value
-        except ZeroDivisionError:
-            logging.error("Cannot calculate average order value. No customer data available.")
-            return 0
+            with open(self.csv_file, 'w', newline='') as csvfile:
+                fieldnames = ['name', 'price']
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+                for product in product_details:
+                    writer.writerow(product)
+            self.logger.info('Saved product details to CSV file: %s', self.csv_file)
+        except Exception as e:
+            self.logger.error('Error saving product details to CSV file: %s', e)
 
-    def extract_most_frequent_buyers(self) -> dict:
+    def save_to_json(self, product_details: list) -> None:
         """
-        Extract the most frequent buyers from the customer data.
+        Save the scraped product details to a JSON file.
+
+        Args:
+        - product_details (list): A list of dictionaries containing the product details.
 
         Returns:
-        - dict: A dictionary containing the most frequent buyers and their purchase counts.
+        - None
         """
         try:
-            for row in self.customer_data:
-                buyer = row['buyer_name']
-                if buyer in self.most_frequent_buyers:
-                    self.most_frequent_buyers[buyer] += 1
-                else:
-                    self.most_frequent_buyers[buyer] = 1
-            return self.most_frequent_buyers
-        except KeyError:
-            logging.error("Invalid CSV file format. 'buyer_name' column not found.")
-            return {}
+            with open(self.json_file, 'w') as jsonfile:
+                json.dump(product_details, jsonfile, indent=4)
+            self.logger.info('Saved product details to JSON file: %s', self.json_file)
+        except Exception as e:
+            self.logger.error('Error saving product details to JSON file: %s', e)
 
     def run(self) -> None:
         """
-        Run the Customerinsightsagent class and execute all capability methods.
+        Run the Autoagent instance.
+
+        Returns:
+        - None
         """
-        self.read_csv_file()
-        self.extract_total_purchases()
-        self.extract_average_order_value()
-        self.extract_most_frequent_buyers()
-        logging.info(f"Total purchases: {self.total_purchases}")
-        logging.info(f"Average order value: {self.average_order_value}")
-        logging.info(f"Most frequent buyers: {self.most_frequent_buyers}")
-        with open(self.json_file_path, 'w') as f:
-            json.dump({
-                'total_purchases': self.total_purchases,
-                'average_order_value': self.average_order_value,
-                'most_frequent_buyers': self.most_frequent_buyers
-            }, f)
+        self.web_scraping()
 
 if __name__ == '__main__':
-    agent = Customerinsightsagent('customer_data.csv', 'customer_insights.json')
+    url = 'https://example.com/products'
+    agent = Autoagent(url)
     agent.run()

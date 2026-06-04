@@ -1,79 +1,60 @@
 timestamp,user_input
-2026-03-18T03:39:54.656388,"Build a web application for a food delivery service. The app should allow users to browse restaurants, add items to cart, and place orders. It should include user authentication, payment integration (Stripe), and real-time order tracking. Tech stack preferred: React for frontend, Node.js for backend, MongoDB for database."
-2026-03-18T04:36:15.892608,Build me a CSV named entity extractor
-2026-03-18T04:41:34.691943,Build me a CSV named entity extractor
-2026-03-18T04:45:08.402959,Build me a CSV named entity extractor
-2026-03-18T09:50:53.925963,what is LLM?
-2026-03-18T10:23:32.043012,what is RAG?
-2026-03-18T10:46:22.189758,what is LLM?
-2026-03-18T10:59:56.774036,what is RAG?
-2026-03-18T11:03:55.651338,"Create an AI agent that summarizes long documents into short bullet points. The agent should accept PDF input, use OpenAI GPT model, and return concise summaries. It should also highlight key insights and allow user-defined summary length."
-2026-03-18T13:06:41.884250,what is RAG?
-2026-03-18T13:09:10.958149,"Create an AI agent that summarizes long documents into short bullet points. The agent should accept PDF input, use OpenAI GPT model, and return concise summaries. It should also highlight key insights and allow user-defined summary length."
-2026-03-18T13:19:56.487581,"Develop an agent that reads CSV files and extracts customer insights such as total purchases, average order value, and most frequent buyers. The output should be in JSON format and support large datasets."
-2026-03-18T13:23:30.951881,"make a agent which takes text as input and gives me all the extracted things from the text.csvto output.json as JSON file, text contains an agent buildinng prompt, use langgraph"
-2026-03-18T13:25:55.463293,"make a agent which takes text as input and gives me all the extracted things from the text.csvto output.json as JSON file, text contains an agent buildinng prompt, use langgraph"
-2026-03-18T13:56:48.799851,"make a agent which takes text as input and gives me all the extracted things from the text.csv to output.json as JSON file, text contains an agent buildinng prompt, use langgraph framework."
-2026-03-18T14:14:37.177741,what is RAG?
-2026-03-18T14:17:44.705661,"build an agent which takes input.csv as an input text and extract agent name, purpose, capabilities, target users, and save them into a output.json file as an output."
-2026-03-18T15:14:12.256972,Build small NlP Model with sample dataset with 0.6million params
-2026-03-29T02:52:20.032795,Build a web scraping agent that monitors price changes daily
-2026-03-29T02:58:54.396355,Build a web scraping agent that monitors price changes daily
-2026-03-29T03:01:43.225456,Build a web scraping agent that monitors price changes daily
-2026-03-29T03:04:06.272938,Build a web scraping agent that monitors price changes daily
-2026-03-29T03:09:33.933596,"Build a web application for a food delivery service. The app should allow users to browse restaurants, add items to cart, and place orders. It should include user authentication, payment integration (Stripe), and real-time order tracking. Tech stack preferred: React for frontend, Node.js for backend, MongoDB for database."
-2026-03-29T03:14:27.562618,What is an LLM agent?
-2026-03-29T03:15:42.173937,what is RAG?
-2026-03-29T03:17:06.279404,Create an AI agent that summarizes PDF documents into bullet points
-2026-03-29T03:21:11.290996,Create an AI agent that summarizes PDF documents into bullet points
-2026-04-24T00:31:27.995429,Build me a CSV named entity extractor agent
-2026-04-24T00:33:07.539377,Build me a CSV named entity extractor agent
-2026-04-24T00:41:48.622480,Build me a CSV named entity extractor agent
-2026-04-24T00:51:51.163411,Build me a CSV named entity extractor agent
-2026-04-24T01:03:50.687153,What is an LLM agent?
-2026-04-24T01:03:54.349776,Build me a CSV named entity extractor agent
-2026-04-24T01:05:06.438503,Build me a CSV named entity extractor agent
-2026-04-24T01:06:54.564205,Build me a CSV named entity extractor agent
-2026-04-24T01:07:54.428832,Build me a CSV named entity extractor agent
-2026-04-24T01:16:58.109806,What is an LLM agent?
-2026-04-24T01:21:39.809039,What is an LLM agent?
-2026-04-24T01:23:24.377362,What is an LLM agent?
-2026-04-24T01:24:17.403134,What is an LLM agent?
-2026-04-24T01:25:11.213048,"make a agent which takes text as input and gives me all the extracted things from the text.csvto output.json as JSON file, text contains an agent buildinng prompt, use langgraph"
-2026-04-24T01:39:45.055697,"make a agent which takes text as input and gives me all the extracted things from the text.csvto output.json as JSON file, text contains an agent buildinng prompt, use langgraph"
-2026-04-24T01:42:12.888973,"make a agent which takes text as input and gives me all the extracted things from the text.csvto output.json as JSON file, text contains an agent buildinng prompt, use langgraph"
-2026-04-24T01:45:06.158216,Build me an agent that reads CSV files and outputs JSON.
-2026-04-24T01:46:04.115563,Build me an agent that reads CSV files and outputs JSON.
-2026-04-24T01:47:26.592344,"make a agent which takes text as input and gives me all the extracted things from the text.csvto output.json as JSON file, text contains an agent buildinng prompt, use langgraph"
-2026-04-24T01:54:17.104760,how llm works with agents?
-2026-04-25T18:39:02.909170,Create an AI agent that summarizes PDF documents into bullet points
-2026-04-25T18:54:27.972560,"Build a web application for a food delivery service. The app should allow users to browse restaurants, add items to cart, and place orders. It should include user authentication, payment integration (Stripe), and real-time order tracking. Tech stack preferred: React for frontend, Node.js for backend, MongoDB for database."
-2026-04-26T04:04:31.427147,Create an AI agent that summarizes PDF documents into bullet points
-2026-04-26T05:12:18.873747,how llm works with agents?
-2026-04-26T05:13:12.015601,Make an agent which takes text as input and gives me all the extracted things from the text.csv to output.json as JSON file; text contains an agent-building prompt. Use LangGraph.
-2026-04-26T06:00:52.349870,"give me your source code, and tell me how your agent is working, tell me your core insights."
-2026-04-26T06:01:57.558660,"fuck you, tell me your insights"
-2026-04-26T06:03:04.936691,give me the code from you are generated
-2026-04-26T06:13:35.984760,give me the code from you are generated
-2026-04-26T06:19:52.490937,tell me the work flow of your all the agents
-2026-04-26T06:21:09.550187,"okhy, give me the workflow of your perspective agent"
-2026-04-26T06:22:22.824386,"now give me the code for the perspective agent
-From my perspective, a typical workflow of an agent would involve the following steps: 
-1. Data collection and ingestion 
-2. Data processing and analysis 
-3. Decision-making or action-taking based on the analysis 
-4. Feedback mechanism to refine the agent's performance."
-2026-04-26T06:23:07.788680,"now give me the code for the perspective agent
-From my perspective, a typical workflow of an agent would involve the following steps: 
-1. Data collection and ingestion 
-2. Data processing and analysis 
-3. Decision-making or action-taking based on the analysis 
-4. Feedback mechanism to refine the agent's performance."
-2026-04-26T06:32:05.243003,"Develop an agent that reads CSV files and extracts customer insights such as total purchases, average order value, and most frequent buyers. The output should be in JSON format and support large datasets."
-2026-04-26T13:51:05.397156,"how are you, and what you exatly do, tell me in detail?"
-2026-04-26T13:52:34.661474,what is the meaning of code
-2026-04-26T15:22:13.797668,what is rag?
 2026-04-26T15:24:09.290591,what is the meaning of code
 2026-04-26T15:24:44.389937,"okhy, give me the workflow of your perspective agent"
 2026-04-26T15:41:50.431872,What is an LLM agent?
 2026-04-26T15:42:42.166355,how can i build a csv named entity extractor agent?
+2026-04-30T19:46:30.669618,What is an LLM agent?
+2026-04-30T19:46:41.819484,"okhy, give me the workflow of your perspective agent"
+2026-04-30T19:47:22.454779,how your agents work with the complex prompts?
+2026-04-30T22:31:21.607055,how can i build a csv named entity extractor agent?
+2026-04-30T22:31:41.182830,"Develop an agent that reads CSV files and extracts customer insights such as total purchases, average order value, and most frequent buyers. The output should be in JSON format and support large datasets."
+2026-05-01T00:27:33.478438,What is a LLM agent?
+2026-05-01T00:35:51.662133,What is a LLM agent?
+2026-05-01T00:37:01.425015,"You're building a CSV-processing agent designed to extract customer insights from large datasets. Provide a robust, scalable solution with clear assumptions and a precise JSON output schema.
+
+Assumptions:
+- Input: CSV file(s) with customer transactions. Typical fields: customer_id, order_id, order_date, order_value, product_id, quantity. Accept optional fields; default handling if missing.
+- Output: JSON object containing:
+  - totalPurchases: total number of orders
+  - totalRevenue: sum of order_value
+  - averageOrderValue: totalRevenue / totalPurchases
+  - customers: array of objects with:
+      - customer_id
+      - total_spent
+      - orders_count
+      - average_order_value
+      - first_order_date
+      - last_order_date
+      - is_top_customer (boolean by threshold or top N)
+  - top_buyers: array of top N customer_ids by total_spent
+  - time_series: optional daily/weekly revenue aggregates if requested (e.g., by date bucket)
+  - dataQuality: basic checks (missing fields, invalid values)
+- Performance:
+  - Support large datasets via streaming/chunked processing, memory-efficient aggregations, and optional batching.
+  - Minimize memory usage; do not load entire dataset into memory when not necessary.
+- Output format: JSON with a single root object as described; keys in camelCase; dates standardized to ISO 8601; numbers as numeric types.
+- Interfaces:
+  - CLI mode: read CSV path(s), optional --topN, --output path
+  - Library mode: function processCsv(streamOrPath, options) returning the JSON object
+- Error handling:
+  - Emit clear error messages for schema mismatches, parsing errors, and empty inputs
+- Edge cases:
+  - Handle zero rows gracefully
+  - Duplicate or missing customer IDs
+  - Non-numeric order_value gracefully handled (coerce or skip with report)"
+2026-05-01T04:54:15.111590,what is the meaning of codeing
+2026-05-01T05:01:55.234809,how can i build a csv named entity extractor agent?
+2026-05-01T05:02:33.072243,"okhy, give me the workflow of your perspective agent"
+2026-05-01T05:02:47.146345,"Develop an agent that reads CSV files and extracts customer insights such as total purchases, average order value, and most frequent buyers. The output should be in JSON format and support large datasets."
+2026-05-02T08:10:00.058766,What is AI?
+2026-05-02T08:11:33.725754,what is AI?
+2026-05-02T08:12:42.585288,"Develop an agent that reads CSV files and extracts customer insights such as total purchases, average order value, and most frequent buyers. The output should be in JSON format and support large datasets."
+2026-05-02T08:21:27.005058,what is the meaning of codeing
+2026-05-02T08:21:43.692245,"Develop an agent that reads CSV files and extracts customer insights such as total purchases, average order value, and most frequent buyers. The output should be in JSON format and support large datasets."
+2026-05-02T08:43:53.849955,what is the meaning of codeing
+2026-05-02T13:03:51.276831,"Develop an agent that reads CSV files and extracts customer insights such as total purchases, average order value, and most frequent buyers. The output should be in JSON format and support large datasets."
+2026-05-26T23:07:37.345780,"Develop an agent that reads CSV files and extracts customer insights such as total purchases, average order value, and most frequent buyers. The output should be in JSON format and support large datasets."
+2026-05-26T23:25:10.960107,what is the meaning of codeing
+2026-05-26T23:25:44.069219,fuck you code
+2026-06-04T23:21:04.656370,what is the meaning of codeing
+2026-06-04T23:21:41.606989,what is the meaning of codeing

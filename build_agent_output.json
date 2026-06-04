@@ -1,0 +1,9 @@
+{
+  "route": "json_extractor",
+  "classification": "agent_building",
+  "user_text": "Build me a web scraping agent that extracts product details from an online store and saves results to a CSV file",
+  "conversational_response": null,
+  "confidence": "high",
+  "reason": "The user directly uses the imperative phrase 'Build me' to request the creation of a specific web scraping agent.",
+  "original_input": "cd /d \"d:\\Configurable Agentic System\" && cmd /c \"(echo Build me a web scraping agent that extracts product details from an online store and saves results to a CSV file. & echo.) | \"d:\\Configurable Agentic System\\venv\\Scripts\\python.exe\" main.py\"\ncd /d \"d:\\Configurable Agentic System\" && powershell -NoProfile -Command \"$lines = @('Build me a web scraping agent that extracts product details from an online store and saves results to a CSV file.',''); $lines | & 'd:\\Configurable Agentic System\\venv\\Scripts\\python.exe' main.py\"\ncd /d \"d:\\Configurable Agentic System\" && \"d:\\Configurable Agentic System\\venv\\Scripts\\python.exe\" --version\ncmd /c \"echo hi\"\nBuild me a web scraping agent that extracts product details from an online store and saves results to a CSV file."
+}

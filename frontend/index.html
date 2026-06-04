@@ -1,192 +1,253 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AgentForge — AI Agent Generator</title>
-    <meta name="description" content="Generate production-ready AI agents from natural language" />
-    <!-- Backend API URL on Render -->
-    <meta name="api-base" content="https://configurable-agent.onrender.com" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
 
-    <!-- ═══════════ AUTH OVERLAY ═══════════ -->
-    <div id="authOverlay" class="auth-overlay">
-      <div class="auth-card">
-        <div class="auth-brand">
-          <div class="auth-logo">A</div>
-          <h1>AgentForge</h1>
-          <p>Generate AI agents from natural language</p>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgentForge — AI Agent Generator</title>
+  <meta name="description" content="Generate production-ready AI agents from natural language" />
+  <meta name="api-base" content="https://configurable-agent.onrender.com" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <canvas id="bgCanvas"></canvas>
+
+  <div id="authOverlay" class="auth-overlay">
+    <div class="auth-grid-bg"></div>
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="auth-logo">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <path d="M4 14 L14 4 L24 14 L14 24 Z" stroke="currentColor" stroke-width="1.5" fill="none" />
+            <path d="M14 4 L14 24" stroke="currentColor" stroke-width="1" opacity="0.4" />
+            <path d="M4 14 L24 14" stroke="currentColor" stroke-width="1" opacity="0.4" />
+            <circle cx="14" cy="14" r="3" fill="currentColor" />
+          </svg>
         </div>
-
-        <div id="authTabs" class="auth-tabs">
-          <button class="auth-tab active" data-auth-tab="login">Sign In</button>
-          <button class="auth-tab" data-auth-tab="signup">Create Account</button>
+        <div class="auth-brand-text">
+          <div class="auth-brand-name">AGENT<span>FORGE</span></div>
+          <div class="auth-brand-sub">// neural pipeline interface v2.0</div>
         </div>
-
-        <!-- Login Form -->
-        <form id="loginForm" class="auth-form active" data-auth-form="login">
-          <div class="form-group">
-            <label for="loginEmail">Email</label>
-            <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
-          </div>
-          <div class="form-group">
-            <label for="loginPassword">Password</label>
-            <input type="password" id="loginPassword" placeholder="Enter your password" required autocomplete="current-password" />
-          </div>
-          <div id="loginError" class="form-error"></div>
-          <button type="submit" class="btn btn-auth">Sign In</button>
-        </form>
-
-        <!-- Signup Form -->
-        <form id="signupForm" class="auth-form" data-auth-form="signup">
-          <div class="form-group">
-            <label for="signupUsername">Username</label>
-            <input type="text" id="signupUsername" placeholder="Choose a username" required minlength="3" maxlength="30" autocomplete="username" />
-          </div>
-          <div class="form-group">
-            <label for="signupEmail">Email</label>
-            <input type="email" id="signupEmail" placeholder="you@example.com" required autocomplete="email" />
-          </div>
-          <div class="form-group">
-            <label for="signupPassword">Password</label>
-            <input type="password" id="signupPassword" placeholder="Min 6 characters" required minlength="6" autocomplete="new-password" />
-          </div>
-          <div id="signupError" class="form-error"></div>
-          <button type="submit" class="btn btn-auth">Create Account</button>
-        </form>
       </div>
-    </div>
 
-    <!-- ═══════════ MAIN APP ═══════════ -->
-    <div id="appShell" class="app hidden">
-      <aside class="sidebar">
-        <div class="brand">
-          <div class="logo">A</div>
-          <div class="brand-text">
-            <div class="brand-title">AgentForge</div>
-            <div class="brand-subtitle">Pipeline UI</div>
-          </div>
+      <div id="authTabs" class="auth-tabs">
+        <button class="auth-tab active" data-auth-tab="login">SIGN_IN</button>
+        <button class="auth-tab" data-auth-tab="signup">REGISTER</button>
+        <div class="auth-tab-indicator"></div>
+      </div>
+
+      <form id="loginForm" class="auth-form active" data-auth-form="login">
+        <div class="form-group">
+          <label for="loginEmail"><span class="form-prefix">&gt;</span> EMAIL_ADDRESS</label>
+          <input type="email" id="loginEmail" placeholder="user@domain.com" required autocomplete="email" />
         </div>
+        <div class="form-group">
+          <label for="loginPassword"><span class="form-prefix">&gt;</span> PASSWORD_HASH</label>
+          <input type="password" id="loginPassword" placeholder="••••••••••••" required
+            autocomplete="current-password" />
+        </div>
+        <div id="loginError" class="form-error"></div>
+        <button type="submit" class="btn btn-auth">
+          <span class="btn-auth-text">AUTHENTICATE</span>
+          <span class="btn-auth-arrow">→</span>
+        </button>
+      </form>
 
-        <div class="sidebar-section">
-          <div class="section-title">History</div>
+      <form id="signupForm" class="auth-form" data-auth-form="signup">
+        <div class="form-group">
+          <label for="signupUsername"><span class="form-prefix">&gt;</span> USERNAME</label>
+          <input type="text" id="signupUsername" placeholder="handle_0x" required minlength="3" maxlength="30"
+            autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label for="signupEmail"><span class="form-prefix">&gt;</span> EMAIL_ADDRESS</label>
+          <input type="email" id="signupEmail" placeholder="user@domain.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label for="signupPassword"><span class="form-prefix">&gt;</span> SET_PASSWORD</label>
+          <input type="password" id="signupPassword" placeholder="min_length=6" required minlength="6"
+            autocomplete="new-password" />
+        </div>
+        <div id="signupError" class="form-error"></div>
+        <button type="submit" class="btn btn-auth">
+          <span class="btn-auth-text">CREATE_NODE</span>
+          <span class="btn-auth-arrow">→</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div id="appShell" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">
+          <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
+            <path d="M4 14 L14 4 L24 14 L14 24 Z" stroke="currentColor" stroke-width="1.5" fill="none" />
+            <path d="M14 4 L14 24" stroke="currentColor" stroke-width="1" opacity="0.4" />
+            <path d="M4 14 L24 14" stroke="currentColor" stroke-width="1" opacity="0.4" />
+            <circle cx="14" cy="14" r="3" fill="currentColor" />
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">AGENT<span>FORGE</span></div>
+          <div class="brand-subtitle">// pipeline v2.0</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section" style="flex:1;min-height:0;">
+        <div class="section-title"><span class="section-title-bracket">[</span>HISTORY<span
+            class="section-title-bracket">]</span></div>
+        <div class="history-scroll-wrap">
           <div id="history" class="history"></div>
         </div>
+      </div>
 
-        <div class="sidebar-section compact">
-          <div class="section-title">Result Report</div>
-          <div class="report-switcher">
-            <button class="report-btn active" data-report-view="summary">Summary</button>
-            <button class="report-btn" data-report-view="verifier">Verifier JSON</button>
-            <button class="report-btn" data-report-view="attempts">Attempts</button>
-          </div>
-          <div class="score-box">
-            <div class="score-label">Verified Score</div>
-            <div id="verifiedScore" class="score-value">--</div>
+      <div class="sidebar-section compact">
+        <div class="section-title"><span class="section-title-bracket">[</span>RESULT_REPORT<span
+            class="section-title-bracket">]</span></div>
+        <div class="report-switcher">
+          <button class="report-btn active" data-report-view="summary">SUMMARY</button>
+          <button class="report-btn" data-report-view="verifier">VERIFIER</button>
+          <button class="report-btn" data-report-view="attempts">ATTEMPTS</button>
+        </div>
+        <div class="score-box">
+          <div class="score-label">VERIFIED_SCORE</div>
+          <div id="verifiedScore" class="score-value">--</div>
+          <div class="score-bar">
+            <div class="score-bar-fill" id="scoreBarFill"></div>
           </div>
         </div>
+      </div>
 
-        <div class="sidebar-footer">
-          <div class="user-info" id="userInfo">
-            <span class="user-avatar" id="userAvatar">?</span>
-            <span class="user-name" id="userName">User</span>
-            <button id="btnLogout" class="btn btn-ghost btn-sm">Logout</button>
-          </div>
-          <div id="serverStatus" class="status-pill">
-            <span class="dot"></span>
-            <span class="label">Server</span>
-            <span class="value">…</span>
+      <div class="sidebar-footer">
+        <div class="user-info" id="userInfo">
+          <span class="user-avatar" id="userAvatar">?</span>
+          <span class="user-name" id="userName">USER_NODE</span>
+          <button id="btnLogout" class="btn btn-ghost btn-sm">EXIT</button>
+        </div>
+        <div id="serverStatus" class="status-pill">
+          <span class="dot"></span>
+          <span class="label">SRV</span>
+          <span class="value">…</span>
+          <span class="ping-ring"></span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-title">PIPELINE_STUDIO</div>
+          <div class="topbar-crumb">
+            <span>root</span><span class="crumb-sep">/</span>
+            <span>agent</span><span class="crumb-sep">/</span>
+            <span class="crumb-active">session</span>
           </div>
         </div>
-      </aside>
+        <div class="topbar-right">
+          <div class="topbar-clock" id="topbarClock">00:00:00</div>
+          <button id="btnClear" class="btn btn-ghost">CLR</button>
+        </div>
+      </header>
 
-      <main class="main">
-        <header class="topbar">
-          <div class="topbar-left">
-            <div class="title">Agent Pipeline</div>
-            <div class="subtitle">Describe your agent or ask a question</div>
-          </div>
-          <div class="topbar-right">
-            <button id="btnClear" class="btn btn-ghost">Clear</button>
-          </div>
-        </header>
-
-        <section class="content">
-          <div class="panel panel-chat">
-            <div class="panel-header">
-              <div class="panel-title">Conversation</div>
+      <section class="content">
+        <div class="panel panel-chat">
+          <div class="panel-header" style="justify-content: space-between;">
+            <div class="panel-title-row">
+              <span class="panel-dot"></span>
+              <span class="panel-title">TERMINAL</span>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
               <div class="panel-meta" id="routeBadge"></div>
-            </div>
-
-            <div id="chat" class="chat"></div>
-
-            <div class="composer">
-              <textarea
-                id="prompt"
-                rows="3"
-                placeholder="Ask a question, or say: Build me an agent that…"
-                maxlength="5000"
-              ></textarea>
-              <div class="composer-bar">
-                <div class="counter" id="counter">0 / 5000</div>
-                <button id="btnTerminate" class="btn btn-danger">Terminate</button>
-                <button id="btnRun" class="btn btn-primary">Run</button>
-              </div>
+              <button class="btn btn-ghost btn-sm" id="btnNavArtifacts" style="border-color: var(--cyan); color: var(--cyan);">📦 ARTIFACTS</button>
             </div>
           </div>
 
-          <div class="panel panel-right">
-            <div class="panel-header">
-              <div class="panel-title">Pipeline</div>
-              <div class="panel-meta" id="pipelineStatus">Idle</div>
-            </div>
+          <div id="chat" class="chat"></div>
 
-            <div id="pipeline" class="pipeline"></div>
-
-            <div class="divider"></div>
-
-            <div class="panel-header">
-              <div class="panel-title">Artifacts</div>
-              <div class="panel-meta">Preview</div>
-            </div>
-
-            <div class="tabs">
-              <button class="tab active" data-tab="report">Report</button>
-              <button class="tab" data-tab="agent">agent.py</button>
-              <button class="tab" data-tab="main">main.py</button>
-              <button class="tab" data-tab="requirements">requirements.txt</button>
-              <button class="tab" data-tab="readme">README.md</button>
-              <button class="tab" data-tab="spec">Spec JSON</button>
-            </div>
-
-            <div class="tabpanes">
-              <div class="pane active" data-pane="report"><pre id="outReport"></pre></div>
-              <div class="pane" data-pane="agent"><pre id="outAgent"></pre></div>
-              <div class="pane" data-pane="main"><pre id="outMain"></pre></div>
-              <div class="pane" data-pane="requirements"><pre id="outReq"></pre></div>
-              <div class="pane" data-pane="readme"><pre id="outReadme"></pre></div>
-              <div class="pane" data-pane="spec">
-                <div class="spec-toolbar">
-                  <button id="btnConfirmSpec" class="btn btn-primary">Confirm JSON & Generate</button>
-                </div>
-                <textarea id="outSpec" rows="20" spellcheck="false" placeholder="Agent specification JSON" title="Editable agent specification JSON"></textarea>
-              </div>
+          <div class="composer">
+            <div class="composer-label">INPUT_STREAM <span id="counter" class="counter">0/5000</span></div>
+            <textarea id="prompt" rows="3" placeholder="&gt; describe agent requirements or query the system..."
+              maxlength="5000"></textarea>
+            <div class="composer-bar">
+              <button id="btnTerminate" class="btn btn-danger">⬛ KILL</button>
+              <button id="btnRun" class="btn btn-primary">▶ EXEC</button>
             </div>
           </div>
-        </section>
+        </div>
 
-        <div id="toastHost" class="toasts"></div>
-      </main>
-    </div>
+        <div class="panel panel-right">
+          <div class="panel-header">
+            <div class="panel-title-row">
+              <span class="panel-dot panel-dot-amber"></span>
+              <span class="panel-title">PIPELINE</span>
+            </div>
+            <div class="panel-meta pipeline-status-badge" id="pipelineStatus">IDLE</div>
+          </div>
 
-    <script src="app.js"></script>
-  </body>
+          <div id="pipeline" class="pipeline"></div>
+        </div>
+
+        <div class="panel panel-artifacts hidden" id="panelArtifacts" style="position: absolute; inset: 10px; z-index: 50; display: flex; flex-direction: column;">
+          <div class="panel-header" style="justify-content: space-between;">
+            <div class="panel-title-row">
+              <button class="btn btn-ghost btn-sm" id="btnBackTerminal" style="margin-right: 10px;">← BACK</button>
+              <span class="panel-dot panel-dot-cyan"></span>
+              <span class="panel-title">ARTIFACTS_WORKSPACE</span>
+            </div>
+            <button class="btn btn-primary btn-sm" id="btnCopyArtifact">📄 COPY CURRENT</button>
+          </div>
+
+          <div class="tabs">
+            <button class="tab active" data-tab="report">RPT</button>
+            <button class="tab" data-tab="agent">AGT.PY</button>
+            <button class="tab" data-tab="main">MAIN.PY</button>
+            <button class="tab" data-tab="requirements">REQS</button>
+            <button class="tab" data-tab="readme">README</button>
+            <button class="tab" data-tab="spec">SPEC</button>
+          </div>
+
+          <div class="tabpanes">
+            <div class="pane active" data-pane="report">
+              <pre id="outReport"></pre>
+            </div>
+            <div class="pane" data-pane="agent">
+              <pre id="outAgent"></pre>
+            </div>
+            <div class="pane" data-pane="main">
+              <pre id="outMain"></pre>
+            </div>
+            <div class="pane" data-pane="requirements">
+              <pre id="outReq"></pre>
+            </div>
+            <div class="pane" data-pane="readme">
+              <pre id="outReadme"></pre>
+            </div>
+            <div class="pane" data-pane="spec">
+              <div class="spec-toolbar">
+                <button id="btnConfirmSpec" class="btn btn-primary">✓ CONFIRM &amp; GENERATE</button>
+              </div>
+              <textarea id="outSpec" rows="20" spellcheck="false" placeholder="// agent_spec.json"
+                title="Editable agent specification JSON"></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div id="toastHost" class="toasts"></div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="app.js"></script>
+</body>
+
 </html>

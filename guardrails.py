@@ -284,7 +284,7 @@ class RateLimiter:
 
 
 # Pre-configured limiters for deployment
-PIPELINE_LIMITER = RateLimiter(max_requests=5, window_seconds=3600)     # 5 pipeline runs / hour
+PIPELINE_LIMITER = RateLimiter(max_requests=200, window_seconds=60)     # 200 pipeline runs / minute
 API_LIMITER = RateLimiter(max_requests=30, window_seconds=60)           # 30 API calls / minute
 AUTH_LIMITER = RateLimiter(max_requests=10, window_seconds=300)         # 10 auth attempts / 5 min
 

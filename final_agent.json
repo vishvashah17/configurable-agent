@@ -1,0 +1,38 @@
+{
+  "user_input": "cd /d \"d:\\Configurable Agentic System\" && cmd /c \"(echo Build me a web scraping agent that extracts product details from an online store and saves results to a CSV file. & echo.) | \"d:\\Configurable Agentic System\\venv\\Scripts\\python.exe\" main.py\"\ncd /d \"d:\\Configurable Agentic System\" && powershell -NoProfile -Command \"$lines = @('Build me a web scraping agent that extracts product details from an online store and saves results to a CSV file.',''); $lines | & 'd:\\Configurable Agentic System\\venv\\Scripts\\python.exe' main.py\"\ncd /d \"d:\\Configurable Agentic System\" && \"d:\\Configurable Agentic System\\venv\\Scripts\\python.exe\" --version\ncmd /c \"echo hi\"\nBuild me a web scraping agent that extracts product details from an online store and saves results to a CSV file.",
+  "agent_name": "AutoAgent",
+  "primary_purpose": "extracts product details from an online store and saves results to a CSV file",
+  "capabilities": [
+    "web scraping"
+  ],
+  "target_users": "general users",
+  "domain": "online store",
+  "content_types": [
+    "product details",
+    "CSV file"
+  ],
+  "decision_authority": "assist only",
+  "language": "python",
+  "language_reason": "User specified python.exe",
+  "language_user_specified": true,
+  "framework": "None",
+  "api_integrations": [],
+  "database": "json_file",
+  "cloud_platform": "local",
+  "performance": "normal",
+  "security": "basic",
+  "storage": "json_file",
+  "memory": "in_memory",
+  "third_party_tools": [
+    "powershell",
+    "cmd"
+  ],
+  "tone": "neutral",
+  "personality": [
+    "helpful"
+  ],
+  "emotional_intelligence": "medium",
+  "external_apis": [],
+  "internal_systems": [],
+  "database_connections": []
+}
